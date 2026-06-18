@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добрый Хакер — Этичный Хакинг и Кибербезопасность</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --green: #00ff41;
+            --green-dark: #00cc33;
+            --bg-dark: #0a0a0a;
+            --bg-card: #111111;
+            --text: #e0e0e0;
+            --text-dim: #888;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--green); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--green-dark); }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--green);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 100000;
+            transition: transform 0.1s;
+            mix-blend-mode: difference;
+        }
+
+        .custom-cursor-dot {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 100001;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        #smoke-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--green), var(--green-dark));
+            z-index: 10001;
+            transition: width 0.1s;
+        }
+
+        .preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .preloader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .preloader-text {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 1.5rem;
+            color: var(--green);
+            margin-bottom: 2rem;
+        }
+
+        .preloader-bar {
+            width: 300px;
+            height: 4px;
+            background: rgba(0, 255, 65, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .preloader-fill {
+            height: 100%;
+            background: var(--green);
+            width: 0%;
+            animation: preload 2s ease-in-out forwards;
+        }
+
+        @keyframes preload {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        .preloader-percent {
+            font-family: monospace;
+            color: var(--green);
+            margin-top: 1rem;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 255, 65, 0.1);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--green);
+            text-decoration: none;
+        }
+
+        .logo span { color: var(--text); }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--green);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover { color: var(--green); }
+        .nav-links a:hover::after { width: 100%; }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #hacker-video-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.4;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(10,10,10,0.3) 0%, rgba(10,10,10,0.8) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .glitch {
+            position: relative;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glitch::before {
+            animation: glitch1 2s infinite;
+            color: #ff0000;
+            z-index: -1;
+        }
+
+        .glitch::after {
+            animation: glitch2 2s infinite;
+            color: #00ffff;
+            z-index: -2;
+        }
+
+        @keyframes glitch1 {
+            0%, 90%, 100% { transform: translate(0); }
+            92% { transform: translate(-5px, 3px); }
+            94% { transform: translate(5px, -3px); }
+            96% { transform: translate(-3px, 5px); }
+        }
+
+        @keyframes glitch2 {
+            0%, 90%, 100% { transform: translate(0); }
+            91% { transform: translate(5px, -3px); }
+            93% { transform: translate(-5px, 3px); }
+            95% { transform: translate(3px, -5px); }
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        .terminal {
+            background: #0d0d0d;
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .terminal-line { margin-bottom: 0.5rem; }
+        .terminal-line .prompt { color: var(--green); }
+        .terminal-line .command { color: var(--text); }
+        .terminal-line .output { color: var(--text-dim); }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1rem;
+            background: var(--green);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            background: transparent;
+            color: var(--green);
+            border: 2px solid var(--green);
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: none;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: var(--green);
+            color: var(--bg-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 255, 65, 0.3);
+        }
+
+        .btn-primary {
+            background: var(--green);
+            color: var(--bg-dark);
+        }
+
+        .voice-text {
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--green);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .voice-text.active { opacity: 1; }
+
+        .voice-waveform {
+            display: flex;
+            gap: 3px;
+            justify-content: center;
+            height: 20px;
+            align-items: center;
+        }
+
+        .voice-waveform span {
+            width: 3px;
+            background: var(--green);
+            border-radius: 2px;
+            animation: waveform 0.5s ease-in-out infinite;
+        }
+
+        .voice-waveform span:nth-child(1) { animation-delay: 0s; height: 10px; }
+        .voice-waveform span:nth-child(2) { animation-delay: 0.1s; height: 15px; }
+        .voice-waveform span:nth-child(3) { animation-delay: 0.2s; height: 20px; }
+        .voice-waveform span:nth-child(4) { animation-delay: 0.3s; height: 15px; }
+        .voice-waveform span:nth-child(5) { animation-delay: 0.4s; height: 10px; }
+
+        @keyframes waveform {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.8); }
+        }
+
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .section-title span { color: var(--green); }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-dim);
+            margin-bottom: 4rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .service-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.1);
+            border-radius: 8px;
+            padding: 2rem;
+            transition: all 0.5s;
+            cursor: none;
+        }
+
+        .service-card:hover {
+            border-color: rgba(0, 255, 65, 0.5);
+            transform: translateY(-10px) rotateX(5deg);
+            box-shadow: 0 20px 60px rgba(0, 255, 65, 0.2);
+        }
+
+        .service-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+
+        .service-card:hover .service-icon { transform: scale(1.2) rotateY(180deg); }
+
+        .service-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+        }
+
+        .service-card p { color: var(--text-dim); font-size: 0.95rem; }
+
+        .about {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .about-text h2 { font-size: 2rem; margin-bottom: 1.5rem; }
+        .about-text h2 span { color: var(--green); }
+        .about-text p { color: var(--text-dim); margin-bottom: 1rem; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.1);
+            border-radius: 8px;
+            padding: 2rem;
+        }
+
+        .stat { text-align: center; }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--green);
+        }
+
+        .stat-label { color: var(--text-dim); font-size: 0.9rem; }
+
+        .process {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .process-step {
+            position: relative;
+            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.1);
+            border-radius: 8px;
+            transition: all 0.5s;
+        }
+
+        .process-step:hover {
+            transform: translateY(-10px);
+            border-color: rgba(0, 255, 65, 0.5);
+        }
+
+        .process-step h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .process-step p { color: var(--text-dim); font-size: 0.9rem; }
+
+        .process-step .step-num {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 3rem;
+            font-weight: 800;
+            color: rgba(0, 255, 65, 0.15);
+        }
+
+        .pricing {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .price-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.1);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.5s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .price-card.featured {
+            border-color: var(--green);
+            transform: scale(1.05);
+        }
+
+        .price-card.featured::before {
+            content: 'ПОПУЛЯРНЫЙ';
+            position: absolute;
+            top: 20px;
+            right: -35px;
+            background: var(--green);
+            color: var(--bg-dark);
+            padding: 5px 40px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            transform: rotate(45deg);
+        }
+
+        .price-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--green);
+        }
+
+        .price-card.featured:hover { transform: scale(1.05) translateY(-10px); }
+
+        .price-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--green);
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .price small {
+            font-size: 1rem;
+            color: var(--text-dim);
+        }
+
+        .price-features {
+            list-style: none;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .price-features li {
+            padding: 0.5rem 0;
+            color: var(--text-dim);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .price-features li::before {
+            content: '✓ ';
+            color: var(--green);
+        }
+
+        .testimonials {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .testimonial-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.1);
+            border-radius: 8px;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .testimonial-card::before {
+            content: '"';
+            font-size: 4rem;
+            color: rgba(0, 255, 65, 0.2);
+            position: absolute;
+            top: 10px;
+            left: 20px;
+        }
+
+        .testimonial-text {
+            color: var(--text-dim);
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            padding-top: 1rem;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .testimonial-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--bg-dark);
+        }
+
+        .testimonial-name { font-weight: 600; }
+        .testimonial-role { color: var(--text-dim); font-size: 0.85rem; }
+
+        .faq {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.1);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            cursor: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .faq-question:hover { color: var(--green); }
+
+        .faq-question::after {
+            content: '+';
+            font-size: 1.5rem;
+            color: var(--green);
+            transition: transform 0.3s;
+        }
+
+        .faq-item.active .faq-question::after { transform: rotate(45deg); }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s;
+            padding: 0 1.5rem;
+            color: var(--text-dim);
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 200px;
+            padding-bottom: 1.5rem;
+        }
+
+        .partners {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 3rem;
+            opacity: 0.5;
+        }
+
+        .partner-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            transition: all 0.3s;
+        }
+
+        .partner-logo:hover { color: var(--green); opacity: 1; }
+
+        .interactive-terminal {
+            background: #0d0d0d;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            max-width: 700px;
+            margin: 0 auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .terminal-output {
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+        }
+
+        .terminal-input-line .prompt { color: var(--green); margin-right: 0.5rem; }
+
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: monospace;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: none;
+        }
+
+        .contact-form {
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .contact-form input,
+        .contact-form textarea {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            border-radius: 4px;
+            padding: 1rem;
+            color: var(--text);
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s;
+            cursor: none;
+        }
+
+        .contact-form input:focus,
+        .contact-form textarea:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+
+        .contact-form textarea { min-height: 150px; }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .social-link {
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(0, 255, 65, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--green);
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .social-link:hover {
+            background: var(--green);
+            color: var(--bg-dark);
+            transform: translateY(-5px) rotateY(360deg);
+            box-shadow: 0 10px 30px rgba(0, 255, 65, 0.3);
+        }
+
+        .floating-cube {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            pointer-events: none;
+            animation: cubeFloat 8s linear infinite;
+        }
+
+        .floating-cube:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; }
+        .floating-cube:nth-child(2) { left: 80%; top: 40%; animation-delay: 2s; }
+        .floating-cube:nth-child(3) { left: 30%; top: 70%; animation-delay: 4s; }
+        .floating-cube:nth-child(4) { left: 70%; top: 80%; animation-delay: 6s; }
+
+        @keyframes cubeFloat {
+            0% { transform: rotateX(0) rotateY(0) rotateZ(0) translateY(0); }
+            100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg) translateY(-100vh); }
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.03;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: var(--green);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 65, 0.3);
+        }
+
+        .chat-widget {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 1000;
+        }
+
+        .chat-btn {
+            width: 60px;
+            height: 60px;
+            background: var(--green);
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: none;
+            box-shadow: 0 5px 20px rgba(0, 255, 65, 0.3);
+            transition: all 0.3s;
+        }
+
+        .chat-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-window {
+            position: absolute;
+            bottom: 70px;
+            left: 0;
+            width: 350px;
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 8px;
+            display: none;
+            overflow: hidden;
+        }
+
+        .chat-window.active { display: block; }
+
+        .chat-header {
+            background: var(--green);
+            color: var(--bg-dark);
+            padding: 1rem;
+            font-weight: 700;
+        }
+
+        .chat-messages {
+            height: 250px;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: rgba(0, 255, 65, 0.1);
+            font-size: 0.9rem;
+        }
+
+        .chat-message.bot { border-left: 3px solid var(--green); }
+        .chat-message.user { border-left: 3px solid var(--text-dim); text-align: right; }
+
+        .chat-input {
+            display: flex;
+            padding: 1rem;
+            gap: 0.5rem;
+        }
+
+        .chat-input input {
+            flex: 1;
+            background: var(--bg-dark);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 4px;
+            padding: 0.75rem;
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: none;
+        }
+
+        .chat-input input:focus { outline: none; border-color: var(--green); }
+
+        .chat-input button {
+            background: var(--green);
+            border: none;
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            color: var(--bg-dark);
+            font-weight: 600;
+            cursor: none;
+        }
+
+        .newsletter {
+            text-align: center;
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.1);
+            border-radius: 8px;
+            padding: 3rem;
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .newsletter-form input {
+            padding: 1rem 1.5rem;
+            background: var(--bg-dark);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 4px;
+            color: var(--text);
+            font-size: 1rem;
+            min-width: 300px;
+            cursor: none;
+        }
+
+        .newsletter-form input:focus { outline: none; border-color: var(--green); }
+
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid rgba(0, 255, 65, 0.1);
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        footer a { color: var(--green); text-decoration: none; }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .about { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr; }
+            body { cursor: auto; }
+            .custom-cursor, .custom-cursor-dot { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="preloader" id="preloader">
+        <div class="preloader-text">[ INITIALIZING SECURE CONNECTION... ]</div>
+        <div class="preloader-bar"><div class="preloader-fill"></div></div>
+        <div class="preloader-percent" id="preload-percent">0%</div>
+    </div>
+
+    <div class="custom-cursor" id="cursor"></div>
+    <div class="custom-cursor-dot" id="cursor-dot"></div>
+
+    <div id="reading-progress"></div>
+    <div class="noise-overlay"></div>
+    <canvas id="smoke-canvas"></canvas>
+
+    <div class="floating-cube"></div>
+    <div class="floating-cube"></div>
+    <div class="floating-cube"></div>
+    <div class="floating-cube"></div>
+
+    <canvas class="matrix-bg" id="matrix"></canvas>
+
+    <nav>
+        <a href="#" class="logo" onclick="playClick()">Добрый<span>Хакер</span></a>
+        <ul class="nav-links">
+            <li><a href="#services" onclick="playClick()">Услуги</a></li>
+            <li><a href="#about" onclick="playClick()">О нас</a></li>
+            <li><a href="#pricing" onclick="playClick()">Тарифы</a></li>
+            <li><a href="#process" onclick="playClick()">Процесс</a></li>
+            <li><a href="#faq" onclick="playClick()">FAQ</a></li>
+            <li><a href="#contact" onclick="playClick()">Контакты</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <canvas id="hacker-video-bg"></canvas>
+        <div class="hero-content">
+            <h1 class="glitch" data-text="Защитим ваш цифровой мир">Защитим ваш <span>цифровой мир</span></h1>
+            <p>Этичный хакинг и кибербезопасность. Мы находим уязвимости до того, как их найдут злоумышленники.</p>
+            
+            <div class="terminal">
+                <div class="terminal-line"><span class="prompt">dobrahacker@secure:~$ </span><span class="command">scan --target your-business</span></div>
+                <div class="terminal-line"><span class="output">[*] Проверка уязвимостей...</span></div>
+                <div class="terminal-line"><span class="output">[+] Найдено уязвимостей: 0</span></div>
+                <div class="terminal-line"><span class="output">[✓] Ваш бизнес защищён</span></div>
+                <div class="terminal-line"><span class="prompt">dobrahacker@secure:~$ </span><span class="cursor"></span></div>
+            </div>
+
+            <div class="hero-buttons">
+                <a href="#contact" class="btn btn-primary" onclick="playClick()">Получить консультацию</a>
+                <button class="btn" id="voice-btn" onclick="startVoice(); playClick()">
+                    <span class="voice-icon">🔊</span> Слушать
+                </button>
+            </div>
+            <div id="voice-text" class="voice-text"></div>
+        </div>
+    </section>
+
+    <section id="services">
+        <h2 class="section-title fade-in">Наши <span>услуги</span></h2>
+        <p class="section-subtitle fade-in">Комплексная защита вашего бизнеса от киберугроз</p>
+        <div class="services-grid">
+            <div class="service-card fade-in" onclick="playClick()">
+                <div class="service-icon">🔍</div>
+                <h3>Тестирование на проникновение</h3>
+                <p>Симуляция атак на ваши системы для выявления уязвимостей.</p>
+            </div>
+            <div class="service-card fade-in" onclick="playClick()">
+                <div class="service-icon">🛡️</div>
+                <h3>Аудит безопасности</h3>
+                <p>Комплексная проверка инфраструктуры на соответствие стандартам.</p>
+            </div>
+            <div class="service-card fade-in" onclick="playClick()">
+                <div class="service-icon">🚨</div>
+                <h3>Реагирование на инциденты</h3>
+                <p>Быстрое устранение последствий атак и восстановление систем.</p>
+            </div>
+            <div class="service-card fade-in" onclick="playClick()">
+                <div class="service-icon">🔐</div>
+                <h3>Защита данных</h3>
+                <p>Шифрование и защита персональных данных по 152-ФЗ.</p>
+            </div>
+            <div class="service-card fade-in" onclick="playClick()">
+                <div class="service-icon">📱</div>
+                <h3>Мобильная безопасность</h3>
+                <p>Аудит и тестирование iOS и Android приложений.</p>
+            </div>
+            <div class="service-card fade-in" onclick="playClick()">
+                <div class="service-icon">☁️</div>
+                <h3>Облачная безопасность</h3>
+                <p>Проверка безопасности AWS, Azure, GCP.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="about">
+        <div class="about">
+            <div class="about-text fade-in">
+                <h2>Мы — <span>Добрый Хакер</span></h2>
+                <p>Команда сертифицированных специалистов по информационной безопасности. Мы используем навыки хакеров для защиты.</p>
+                <p>Наша миссия — сделать интернет безопаснее. Мы работаем с бизнесом любого масштаба.</p>
+            </div>
+            <div class="stats fade-in">
+                <div class="stat"><div class="stat-number" data-target="500">0</div><div class="stat-label">Проектов</div></div>
+                <div class="stat"><div class="stat-number" data-target="99">0</div><div class="stat-label">% Успешных</div></div>
+                <div class="stat"><div class="stat-number" data-target="24">0</div><div class="stat-label">/7 Поддержка</div></div>
+                <div class="stat"><div class="stat-number" data-target="0">0</div><div class="stat-label">Утечек</div></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing">
+        <h2 class="section-title fade-in">Тарифные <span>планы</span></h2>
+        <p class="section-subtitle fade-in">Выберите подходящий план для вашего бизнеса</p>
+        <div class="pricing">
+            <div class="price-card fade-in" onclick="playClick()">
+                <h3>Старт</h3>
+                <div class="price">49 000 ₽<small>/проект</small></div>
+                <ul class="price-features">
+                    <li>Аудит до 10 страниц</li>
+                    <li>Базовый пентест</li>
+                    <li>Отчёт с рекомендациями</li>
+                    <li>30 дней поддержки</li>
+                </ul>
+                <a href="#contact" class="btn" onclick="playClick()">Выбрать</a>
+            </div>
+            <div class="price-card featured fade-in" onclick="playClick()">
+                <h3>Бизнес</h3>
+                <div class="price">149 000 ₽<small>/проект</small></div>
+                <ul class="price-features">
+                    <li>Аудит до 100 страниц</li>
+                    <li>Полный пентест</li>
+                    <li>Тестирование API</li>
+                    <li>90 дней поддержки</li>
+                    <li>Консультации</li>
+                </ul>
+                <a href="#contact" class="btn btn-primary" onclick="playClick()">Выбрать</a>
+            </div>
+            <div class="price-card fade-in" onclick="playClick()">
+                <h3>Корпоратив</h3>
+                <div class="price">Индивидуально</div>
+                <ul class="price-features">
+                    <li>Без ограничений</li>
+                    <li>Собственная команда</li>
+                    <li>Постоянный мониторинг</li>
+                    <li>SLA 99.9%</li>
+                    <li>Выделенный менеджер</li>
+                </ul>
+                <a href="#contact" class="btn" onclick="playClick()">Связаться</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="process">
+        <h2 class="section-title fade-in">Как мы <span>работаем</span></h2>
+        <p class="section-subtitle fade-in">Прозрачный процесс от заявки до результата</p>
+        <div class="process">
+            <div class="process-step fade-in"><span class="step-num">01</span><h3>Консультация</h3><p>Бесплатный аудит текущего состояния безопасности.</p></div>
+            <div class="process-step fade-in"><span class="step-num">02</span><h3>Планирование</h3><p>Разработка стратегии тестирования.</p></div>
+            <div class="process-step fade-in"><span class="step-num">03</span><h3>Выполнение</h3><p>Проведение тестов на проникновение.</p></div>
+            <div class="process-step fade-in"><span class="step-num">04</span><h3>Отчёт</h3><p>Детальный отчёт с рекомендациями.</p></div>
+            <div class="process-step fade-in"><span class="step-num">05</span><h3>Поддержка</h3><p>Помощь в устранении уязвимостей.</p></div>
+        </div>
+    </section>
+
+    <section id="testimonials">
+        <h2 class="section-title fade-in">Отзывы <span>клиентов</span></h2>
+        <p class="section-subtitle fade-in">Что говорят о нас наши клиенты</p>
+        <div class="testimonials">
+            <div class="testimonial-card fade-in">
+                <p class="testimonial-text">Добрый Хакер помог нам найти критические уязвимости до запуска проекта. Профессиональный подход!</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">АК</div>
+                    <div><div class="testimonial-name">Алексей Козлов</div><div class="testimonial-role">CTO, TechStart</div></div>
+                </div>
+            </div>
+            <div class="testimonial-card fade-in">
+                <p class="testimonial-text">Благодаря их работе мы успешно прошли аудит и получили сертификацию ISO 27001.</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">МС</div>
+                    <div><div class="testimonial-name">Мария Сидорова</div><div class="testimonial-role">Директор по ИБ, FinBank</div></div>
+                </div>
+            </div>
+            <div class="testimonial-card fade-in">
+                <p class="testimonial-text">Быстрое реагирование и качественный отчёт. Рекомендую для любого бизнеса.</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">ДВ</div>
+                    <div><div class="testimonial-name">Дмитрий Волков</div><div class="testimonial-role">CEO, ShopOnline</div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq">
+        <h2 class="section-title fade-in">Частые <span>вопросы</span></h2>
+        <div class="faq">
+            <div class="faq-item fade-in" onclick="toggleFaq(this); playClick()">
+                <div class="faq-question">Что такое тестирование на проникновение?</div>
+                <div class="faq-answer">Это симуляция реальной атackers на ваши системы для выявления уязвимостей до злоумышленников.</div>
+            </div>
+            <div class="faq-item fade-in" onclick="toggleFaq(this); playClick()">
+                <div class="faq-question">Сколько времени занимает аудит?</div>
+                <div class="faq-answer">В зависимости от размера системы: от 1 недели для небольших проектов до 2-3 месяцев для крупных инфраструктур.</div>
+            </div>
+            <div class="faq-item fade-in" onclick="toggleFaq(this); playClick()">
+                <div class="faq-question">Вы работаете с удалёнными системами?</div>
+                <div class="faq-answer">Да, мы работаем как с локальными, так и с облачными системами по всему миру.</div>
+            </div>
+            <div class="faq-item fade-in" onclick="toggleFaq(this); playClick()">
+                <div class="faq-question">Какие сертификации имеют ваши специалисты?</div>
+                <div class="faq-answer">CEH, OSCP, CISSP, CompTIA Security+ и другие отраслевые сертификации.</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="terminal-section">
+        <h2 class="section-title fade-in">Интерактивный <span>терминал</span></h2>
+        <p class="section-subtitle fade-in">Попробуйте ввести команду</p>
+        <div class="interactive-terminal fade-in" id="interactive-terminal">
+            <div class="terminal-output" id="terminal-output">Добро пожаловать в Добрый Хакер Terminal v1.0
+Введите "help" для списка команд.</div>
+            <div class="terminal-input-line">
+                <span class="prompt">hacker@secure:~$</span>
+                <input type="text" class="terminal-input" id="terminal-input" autofocus>
+            </div>
+        </div>
+    </section>
+
+    <section id="partners">
+        <h2 class="section-title fade-in">Наши <span>партнёры</span></h2>
+        <div class="partners fade-in">
+            <div class="partner-logo">Microsoft</div>
+            <div class="partner-logo">Google</div>
+            <div class="partner-logo">AWS</div>
+            <div class="partner-logo">Cloudflare</div>
+            <div class="partner-logo">Kaspersky</div>
+        </div>
+    </section>
+
+    <section class="newsletter fade-in">
+        <h2 class="section-title">Подпишитесь на <span>рассылку</span></h2>
+        <p class="section-subtitle">Получайте последние новости о кибербезопасности</p>
+        <div class="newsletter-form">
+            <input type="email" placeholder="Ваш email">
+            <button class="btn btn-primary" onclick="playClick()">Подписаться</button>
+        </div>
+    </section>
+
+    <section id="contact" class="contact" style="text-align:center;">
+        <h2 class="section-title fade-in">Свяжитесь с <span>нами</span></h2>
+        <p class="section-subtitle fade-in">Получите бесплатную консультацию</p>
+        <form class="contact-form fade-in" onsubmit="handleSubmit(event)">
+            <input type="text" placeholder="Ваше имя" required>
+            <input type="email" placeholder="Email" required>
+            <input type="tel" placeholder="Телефон">
+            <textarea placeholder="Опишите вашу задачу..."></textarea>
+            <button type="submit" class="btn btn-primary" onclick="playClick()">Отправить заявку</button>
+        </form>
+        <div class="social-links fade-in">
+            <a href="#" class="social-link" onclick="playClick()">TG</a>
+            <a href="#" class="social-link" onclick="playClick()">VK</a>
+            <a href="#" class="social-link" onclick="playClick()">GH</a>
+            <a href="#" class="social-link" onclick="playClick()">YT</a>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2024 Добрый Хакер. Все права защищены. | <a href="#">Политика конфиденциальности</a></p>
+    </footer>
+
+    <div class="chat-widget">
+        <button class="chat-btn" onclick="toggleChat(); playClick()">💬</button>
+        <div class="chat-window" id="chat-window">
+            <div class="chat-header">Онлайн-чат</div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="chat-message bot">Здравствуйте! Чем могу помочь?</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chat-input" placeholder="Сообщение..." onkeypress="if(event.key==='Enter')sendChat()">
+                <button onclick="sendChat()">→</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'}); playClick()">↑</button>
+
+    <script>
+        const preloader = document.getElementById('preloader');
+        const percentEl = document.getElementById('preload-percent');
+        let preloadProgress = 0;
+        const preloadInterval = setInterval(() => {
+            preloadProgress += Math.random() * 15;
+            if (preloadProgress >= 100) {
+                preloadProgress = 100;
+                clearInterval(preloadInterval);
+                setTimeout(() => preloader.classList.add('hidden'), 500);
+            }
+            percentEl.textContent = Math.floor(preloadProgress) + '%';
+        }, 100);
+
+        const cursor = document.getElementById('cursor');
+        const cursorDot = document.getElementById('cursor-dot');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+            cursorDot.style.left = e.clientX - 3 + 'px';
+            cursorDot.style.top = e.clientY - 3 + 'px';
+        });
+
+        document.querySelectorAll('a, button, .service-card, .price-card, .faq-item').forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.style.transform = 'scale(1.5)');
+            el.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
+        });
+
+        window.addEventListener('scroll', () => {
+            const scrollTop = document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const progress = (scrollTop / scrollHeight) * 100;
+            document.getElementById('reading-progress').style.width = progress + '%';
+
+            const backToTop = document.getElementById('back-to-top');
+            if (scrollTop > 500) backToTop.classList.add('visible');
+            else backToTop.classList.remove('visible');
+        });
+
+        const fadeElements = document.querySelectorAll('.fade-in');
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        fadeElements.forEach(el => fadeObserver.observe(el));
+
+        const statNumbers = document.querySelectorAll('.stat-number[data-target]');
+        const statObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const target = parseInt(entry.target.dataset.target);
+                    animateCounter(entry.target, target);
+                    statObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        statNumbers.forEach(el => statObserver.observe(el));
+
+        function animateCounter(el, target) {
+            let current = 0;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                el.textContent = Math.floor(current) + (target === 99 ? '%' : target === 24 ? '/7' : target === 500 ? '+' : '');
+            }, 30);
+        }
+
+        function playClick() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 800;
+                osc.type = 'sine';
+                gain.gain.value = 0.1;
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.1);
+            } catch(e) {}
+        }
+
+        function toggleFaq(item) {
+            item.classList.toggle('active');
+        }
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            playClick();
+            alert('Спасибо! Мы свяжемся с вами.');
+            e.target.reset();
+        }
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        let audioCtx = null;
+        let isSpeaking = false;
+
+        function startVoice() {
+            if (isSpeaking) {
+                window.speechSynthesis.cancel();
+                isSpeaking = false;
+                document.getElementById('voice-text').classList.remove('active');
+                document.getElementById('voice-text').innerHTML = '';
+                return;
+            }
+
+            const voiceText = document.getElementById('voice-text');
+            voiceText.classList.add('active');
+
+            const messages = [
+                'Добро пожаловать в Добрый Хакер. Мы защищаем ваш цифровой мир.',
+                'Наши специалисты найдут уязвимости до злоумышленников.',
+                'Кибербезопасность — это необходимость.'
+            ];
+
+            let msgIndex = 0;
+
+            function speakNext() {
+                if (msgIndex >= messages.length) {
+                    isSpeaking = false;
+                    voiceText.innerHTML = '';
+                    voiceText.classList.remove('active');
+                    return;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(messages[msgIndex]);
+                utterance.lang = 'ru-RU';
+                utterance.rate = 0.8;
+                utterance.pitch = 0.3;
+
+                utterance.onstart = () => {
+                    voiceText.innerHTML = '<div class="voice-waveform"><span></span><span></span><span></span><span></span><span></span></div>' + messages[msgIndex];
+                };
+
+                utterance.onend = () => {
+                    msgIndex++;
+                    setTimeout(speakNext, 500);
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+
+            isSpeaking = true;
+            speakNext();
+        }
+
+        const hackerCanvas = document.getElementById('hacker-video-bg');
+        const hackerCtx = hackerCanvas.getContext('2d');
+        let binaryColumns = [];
+        let scanLineY = 0;
+
+        function resizeHacker() {
+            hackerCanvas.width = window.innerWidth;
+            hackerCanvas.height = window.innerHeight;
+            binaryColumns = [];
+            const colCount = Math.floor(hackerCanvas.width / 20);
+            for (let i = 0; i < colCount; i++) {
+                binaryColumns.push({ x: i * 20, y: Math.random() * hackerCanvas.height, speed: Math.random() * 3 + 1, chars: [] });
+            }
+        }
+
+        resizeHacker();
+        window.addEventListener('resize', resizeHacker);
+
+        function drawHackerVideo() {
+            hackerCtx.fillStyle = 'rgba(10, 10, 10, 0.1)';
+            hackerCtx.fillRect(0, 0, hackerCanvas.width, hackerCanvas.height);
+            hackerCtx.fillStyle = '#00ff41';
+            hackerCtx.font = '14px monospace';
+
+            binaryColumns.forEach(col => {
+                const char = Math.random() > 0.5 ? '1' : '0';
+                col.chars.push({ char, y: col.y, opacity: 1 });
+                if (col.chars.length > 20) col.chars.shift();
+                col.chars.forEach(c => {
+                    c.opacity -= 0.03;
+                    if (c.opacity > 0) {
+                        hackerCtx.fillStyle = `rgba(0, 255, 65, ${c.opacity * 0.5})`;
+                        hackerCtx.fillText(c.char, col.x, c.y);
+                    }
+                });
+                col.y += col.speed;
+                if (col.y > hackerCanvas.height) { col.y = 0; col.chars = []; }
+            });
+
+            if (Math.random() > 0.97) {
+                hackerCtx.fillStyle = 'rgba(0, 255, 65, 0.1)';
+                hackerCtx.fillRect(0, Math.random() * hackerCanvas.height, hackerCanvas.width, Math.random() * 5 + 2);
+            }
+
+            scanLineY += 2;
+            if (scanLineY > hackerCanvas.height) scanLineY = 0;
+            hackerCtx.strokeStyle = 'rgba(0, 255, 65, 0.3)';
+            hackerCtx.lineWidth = 2;
+            hackerCtx.beginPath();
+            hackerCtx.moveTo(0, scanLineY);
+            hackerCtx.lineTo(hackerCanvas.width, scanLineY);
+            hackerCtx.stroke();
+
+            requestAnimationFrame(drawHackerVideo);
+        }
+        drawHackerVideo();
+
+        const canvas = document.getElementById('smoke-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.size = Math.random() * 20 + 10;
+                this.speedX = (Math.random() - 0.5) * 2;
+                this.speedY = (Math.random() - 0.5) * 2 - 1;
+                this.opacity = 0.6;
+                this.decay = Math.random() * 0.02 + 0.01;
+            }
+            update() { this.x += this.speedX; this.y += this.speedY; this.opacity -= this.decay; this.size += 0.5; }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+                gradient.addColorStop(0, 'rgba(0, 255, 65, 0.3)');
+                gradient.addColorStop(1, 'rgba(0, 255, 65, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            for (let i = 0; i < 2; i++) particles.push(new Particle(e.clientX, e.clientY));
+        });
+
+        function animateSmoke() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].opacity <= 0) particles.splice(i, 1);
+            }
+            requestAnimationFrame(animateSmoke);
+        }
+        animateSmoke();
+
+        const matrixCanvas = document.getElementById('matrix');
+        const matrixCtx = matrixCanvas.getContext('2d');
+        function resizeMatrix() { matrixCanvas.width = window.innerWidth; matrixCanvas.height = window.innerHeight; }
+        resizeMatrix();
+        window.addEventListener('resize', resizeMatrix);
+
+        const chars = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789';
+        const fontSize = 14;
+        let drops = Array(Math.floor(matrixCanvas.width / fontSize)).fill(1);
+
+        function drawMatrix() {
+            matrixCtx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            matrixCtx.fillStyle = '#00ff41';
+            matrixCtx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                matrixCtx.fillText(chars[Math.floor(Math.random() * chars.length)], i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        const termInput = document.getElementById('terminal-input');
+        const termOutput = document.getElementById('terminal-output');
+        const commands = {
+            help: 'Доступные команды: help, scan, status, version, clear, whoami, date',
+            scan: '[*] Сканирование...\n[+] Уязвимостей не найдено. Система защищена!',
+            status: 'Статус: АКТИВНС\nУгроз: 0\nПоследнее сканирование: только что',
+            version: 'Добрый Хакер Terminal v1.0.0',
+            clear: '__CLEAR__',
+            whoami: 'dobrahacker@secure',
+            date: new Date().toLocaleString('ru-RU')
+        };
+
+        termInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const cmd = termInput.value.trim().toLowerCase();
+                termInput.value = '';
+                if (cmd === 'clear') {
+                    termOutput.innerHTML = '';
+                } else {
+                    termOutput.innerHTML += '\n$ ' + cmd + '\n' + (commands[cmd] || 'Команда не найдена. Введите "help"');
+                }
+                termOutput.scrollTop = termOutput.scrollHeight;
+                playClick();
+            }
+        });
+
+        function toggleChat() {
+            document.getElementById('chat-window').classList.toggle('active');
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            const messages = document.getElementById('chat-messages');
+            messages.innerHTML += '<div class="chat-message user">' + msg + '</div>';
+            input.value = '';
+            
+            setTimeout(() => {
+                const replies = [
+                    'Спасибо за обращение! Наш специалист свяжется с вами.',
+                    'Мы ответим в ближайшее время!',
+                    'Оставьте контактные данные, и мы перезвоним.',
+                    'Ваши данные зашифрованы и в безопасности 🔐',
+                    'Сканирую ваши запросы... Угроз не обнаружено.',
+                    'Рекомендуем провести аудит безопасности вашего сайта.',
+                    'Наш ИИ-анализ показывает высокий уровень интереса к вашему запросу!',
+                    'Брандмауэр уже настроен, ждём деталей.',
+                    'Хороший вопрос! Это как раз то, что мы решаем каждый день.',
+                    'Подключаю вас к специалисту по кибербезопасности...',
+                    'Не волнуйтесь, мы найдём solution для вашей задачи!',
+                    'Наш тимлид уже готовит индивидуальное предложение.',
+                    'Пентест вашего проекта — наша стихия!',
+                    'Мы работаем 24/7, ваше сообщение приоритетное.',
+                    'Отлично! Запускаю протокол быстрого реагирования.',
+                    'Замечу, что 90% атак начинаются с фишинга — будьте осторожны!',
+                    'Наше SLA — 99.9% времени реагирования.',
+                    'Загружаю базу известных уязвимостей... проверяю ваш запрос.',
+                    'Сейчас в рабочем режиме, отвечу максимум через 5 минут.',
+                    'Рад помочь! Опишите проблему подробнее, и мы предложим решение.'
+                ];
+                messages.innerHTML += '<div class="chat-message bot">' + replies[Math.floor(Math.random() * replies.length)] + '</div>';
+                messages.scrollTop = messages.scrollHeight;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
