@@ -1312,9 +1312,196 @@
         .city-widget .city-loading .dot:nth-child(2) { animation-delay: 0.2s; }
         .city-widget .city-loading .dot:nth-child(3) { animation-delay: 0.4s; }
 
+        .loading .dots span:nth-child(3) { animation-delay: 0.4s; }
+
         @keyframes dotBlink {
             0%, 100% { opacity: 0.2; }
             50% { opacity: 1; }
+        }
+
+        .admin-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #0a0a0a;
+            z-index: 200000;
+            overflow-y: auto;
+        }
+
+        .admin-overlay.active { display: block; }
+
+        .admin-header {
+            background: linear-gradient(135deg, #0d0d0d, rgba(0,255,65,0.05));
+            border-bottom: 1px solid rgba(0,255,65,0.2);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .admin-header h1 {
+            font-size: 1.5rem;
+            color: #00ff41;
+            text-shadow: 0 0 20px rgba(0,255,65,0.4);
+            font-weight: 800;
+        }
+
+        .admin-header h1 span { color: #fff; }
+
+        .admin-stats {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .admin-stat { text-align: center; }
+
+        .admin-stat-num {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #00ff41;
+            text-shadow: 0 0 15px rgba(0,255,65,0.3);
+        }
+
+        .admin-stat-label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .admin-close {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .admin-close:hover {
+            border-color: #00ff41;
+            color: #00ff41;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .admin-filter {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .admin-filter input {
+            background: #111;
+            border: 1px solid rgba(0,255,65,0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            color: #e0e0e0;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s;
+            min-width: 250px;
+            cursor: auto;
+        }
+
+        .admin-filter input:focus { border-color: #00ff41; }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .admin-card {
+            background: linear-gradient(145deg, #111, rgba(0,255,65,0.02));
+            border: 1px solid rgba(0,255,65,0.12);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .admin-card:hover {
+            border-color: rgba(0,255,65,0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,255,65,0.08);
+        }
+
+        .admin-card .ac-flag { font-size: 2.5rem; flex-shrink: 0; }
+        .admin-card .ac-info { flex: 1; min-width: 0; }
+        .admin-card .ac-city { font-size: 1.1rem; font-weight: 700; color: #fff; }
+        .admin-card .ac-country { font-size: 0.8rem; color: #888; }
+        .admin-card .ac-time { font-size: 0.75rem; color: #555; margin-top: 0.3rem; }
+
+        .admin-countries {
+            margin-top: 3rem;
+            background: linear-gradient(145deg, #111, rgba(0,255,65,0.02));
+            border: 1px solid rgba(0,255,65,0.12);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .admin-countries h2 {
+            color: #00ff41;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 15px rgba(0,255,65,0.3);
+        }
+
+        .admin-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .admin-tag {
+            background: rgba(0,255,65,0.06);
+            border: 1px solid rgba(0,255,65,0.15);
+            border-radius: 20px;
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .admin-tag .acnt {
+            background: rgba(0,255,65,0.15);
+            color: #00ff41;
+            border-radius: 10px;
+            padding: 0.1rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .admin-empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .admin-empty .ae-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.3; }
+
+        @media (max-width: 768px) {
+            .admin-stats { gap: 1rem; }
+            .admin-stat-num { font-size: 1.5rem; }
+            .admin-grid { grid-template-columns: 1fr; }
         }
 
         .visitors-panel {
@@ -1799,6 +1986,40 @@
             </div>
         </div>
     </div>
+    <div class="admin-overlay" id="admin-overlay">
+        <div class="admin-header">
+            <h1>Добрый <span>Хакер</span> — Админ</h1>
+            <div class="admin-stats">
+                <div class="admin-stat">
+                    <div class="admin-stat-num" id="adm-total">0</div>
+                    <div class="admin-stat-label">Визитов</div>
+                </div>
+                <div class="admin-stat">
+                    <div class="admin-stat-num" id="adm-cities">0</div>
+                    <div class="admin-stat-label">Городов</div>
+                </div>
+                <div class="admin-stat">
+                    <div class="admin-stat-num" id="adm-today">0</div>
+                    <div class="admin-stat-label">Сегодня</div>
+                </div>
+                <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+                <button class="admin-close" onclick="closeAdmin()">Выйти ✕</button>
+            </div>
+        </div>
+        <div class="admin-container">
+            <div class="admin-filter">
+                <input type="text" id="adm-search" placeholder="Поиск по городу или стране..." oninput="filterAdmin()">
+            </div>
+            <div class="admin-grid" id="adm-grid">
+                <div class="loading"><div class="dots"><span></span><span></span><span></span></div><br>Загрузка...</div>
+            </div>
+            <div class="admin-countries" id="adm-countries" style="display:none;">
+                <h2>Статистика по странам</h2>
+                <div class="admin-tags" id="adm-tags"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="copy-toast" id="copy-toast">Адрес скопирован!</div>
 
     <div class="chat-widget">
@@ -2481,6 +2702,78 @@
                 }
             };
         })();
+
+        let admAllVisitors = [];
+        function openAdmin() {
+            document.getElementById('admin-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            loadAdminData();
+        }
+        function closeAdmin() {
+            document.getElementById('admin-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+            window.location.hash = '';
+        }
+        async function loadAdminData() {
+            const { data } = await supabase.from('visitors').select('*').order('created_at', { ascending: false }).limit(200);
+            if (!data) return;
+            admAllVisitors = data;
+            renderAdmin(data);
+        }
+        function renderAdmin(visitors) {
+            const grid = document.getElementById('adm-grid');
+            const today = visitors.filter(v => {
+                const d = new Date(v.created_at);
+                return d.toDateString() === new Date().toDateString();
+            });
+            const uniqueCities = [...new Set(visitors.map(v => v.city))];
+            document.getElementById('adm-total').textContent = visitors.length;
+            document.getElementById('adm-cities').textContent = uniqueCities.length;
+            document.getElementById('adm-today').textContent = today.length;
+            if (visitors.length === 0) {
+                grid.innerHTML = '<div class="admin-empty"><div class="ae-icon">📡</div><p>Пока нет данных</p></div>';
+                document.getElementById('adm-countries').style.display = 'none';
+                return;
+            }
+            grid.innerHTML = '';
+            visitors.forEach(v => {
+                const card = document.createElement('div');
+                card.className = 'admin-card';
+                card.innerHTML = '<div class="ac-flag">' + (v.flag || '🌍') + '</div><div class="ac-info"><div class="ac-city">' + (v.city || '?') + '</div><div class="ac-country">' + (v.country || '') + (v.region ? ', ' + v.region : '') + '</div><div class="ac-time">' + admTimeAgo(v.created_at) + '</div></div>';
+                grid.appendChild(card);
+            });
+            const cc = {};
+            visitors.forEach(v => { const c = v.country || '?'; cc[c] = (cc[c] || 0) + 1; });
+            const sorted = Object.entries(cc).sort((a, b) => b[1] - a[1]);
+            const tags = document.getElementById('adm-tags');
+            const sec = document.getElementById('adm-countries');
+            if (sorted.length) {
+                sec.style.display = 'block';
+                tags.innerHTML = '';
+                sorted.forEach(([country, count]) => {
+                    const t = document.createElement('div');
+                    t.className = 'admin-tag';
+                    const fl = flags[country] || '🌍';
+                    t.innerHTML = fl + ' ' + country + ' <span class="acnt">' + count + '</span>';
+                    tags.appendChild(t);
+                });
+            }
+        }
+        function admTimeAgo(ts) {
+            const diff = Math.floor(Date.now() / 1000) - Math.floor(new Date(ts).getTime() / 1000);
+            if (diff < 60) return 'только что';
+            if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+            return Math.floor(diff / 86400) + ' дн назад';
+        }
+        function filterAdmin() {
+            const q = document.getElementById('adm-search').value.toLowerCase();
+            const f = admAllVisitors.filter(v => (v.city||'').toLowerCase().includes(q) || (v.country||'').toLowerCase().includes(q) || (v.region||'').toLowerCase().includes(q));
+            renderAdmin(f);
+        }
+        if (window.location.hash === '#admin') openAdmin();
+        window.addEventListener('hashchange', () => { if (window.location.hash === '#admin') openAdmin(); else closeAdmin(); });
+        setInterval(() => { if (document.getElementById('admin-overlay').classList.contains('active')) loadAdminData(); }, 10000);
     </script>
 </body>
 </html>
