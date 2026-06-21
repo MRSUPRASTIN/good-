@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добрый Хакер — Админ панель</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0d0d0d, rgba(0,255,65,0.05));
+            border-bottom: 1px solid rgba(0,255,65,0.2);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #00ff41;
+            text-shadow: 0 0 20px rgba(0,255,65,0.4);
+            font-weight: 800;
+        }
+
+        .header h1 span { color: #fff; }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #00ff41;
+            text-shadow: 0 0 15px rgba(0,255,65,0.3);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0,255,65,0.08);
+            border: 1px solid rgba(0,255,65,0.3);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #00ff41;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff41;
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,65,0.6); }
+            50% { opacity: 0.6; box-shadow: 0 0 10px 4px rgba(0,255,65,0.2); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar input {
+            background: #111;
+            border: 1px solid rgba(0,255,65,0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            color: #e0e0e0;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s;
+            min-width: 250px;
+        }
+
+        .filter-bar input:focus { border-color: #00ff41; }
+
+        .filter-bar button {
+            background: transparent;
+            border: 1px solid rgba(0,255,65,0.3);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            color: #00ff41;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .filter-bar button:hover {
+            background: #00ff41;
+            color: #0a0a0a;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .visitor-card {
+            background: linear-gradient(145deg, #111, rgba(0,255,65,0.02));
+            border: 1px solid rgba(0,255,65,0.12);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .visitor-card:hover {
+            border-color: rgba(0,255,65,0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,255,65,0.08);
+        }
+
+        .visitor-card.new {
+            border-color: rgba(0,255,65,0.5);
+            background: linear-gradient(145deg, rgba(0,255,65,0.06), #111);
+            animation: newVisitor 0.6s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes newVisitor { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .v-flag {
+            font-size: 2.5rem;
+            flex-shrink: 0;
+        }
+
+        .v-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .v-city {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.2rem;
+        }
+
+        .v-country {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .v-time {
+            font-size: 0.75rem;
+            color: #555;
+            margin-top: 0.3rem;
+        }
+
+        .map-section {
+            margin-top: 3rem;
+            background: linear-gradient(145deg, #111, rgba(0,255,65,0.02));
+            border: 1px solid rgba(0,255,65,0.12);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .map-section h2 {
+            color: #00ff41;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 15px rgba(0,255,65,0.3);
+        }
+
+        .country-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .country-tag {
+            background: rgba(0,255,65,0.06);
+            border: 1px solid rgba(0,255,65,0.15);
+            border-radius: 20px;
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.3s;
+        }
+
+        .country-tag:hover {
+            border-color: rgba(0,255,65,0.4);
+            background: rgba(0,255,65,0.1);
+        }
+
+        .country-tag .count {
+            background: rgba(0,255,65,0.15);
+            color: #00ff41;
+            border-radius: 10px;
+            padding: 0.1rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #555;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #00ff41;
+        }
+
+        .loading .dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #00ff41;
+            border-radius: 50%;
+            margin: 0 4px;
+            animation: dotBlink 1s ease-in-out infinite;
+        }
+
+        .loading .dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotBlink {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Добрый <span>Хакер</span> — Админ</h1>
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-num" id="total-count">0</div>
+                <div class="stat-label">Всего визитов</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="unique-count">0</div>
+                <div class="stat-label">Городов</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="today-count">0</div>
+                <div class="stat-label">Сегодня</div>
+            </div>
+            <div class="live-badge">
+                <div class="live-dot"></div>
+                LIVE
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="filter-bar">
+            <input type="text" id="search" placeholder="Поиск по городу или стране..." oninput="filterVisitors()">
+            <button onclick="refreshData()">Обновить</button>
+        </div>
+
+        <div class="grid" id="grid">
+            <div class="loading"><div class="dots"><span></span><span></span><span></span></div><br>Загрузка...</div>
+        </div>
+
+        <div class="map-section" id="countries-section" style="display:none;">
+            <h2>Статистика по странам</h2>
+            <div class="country-list" id="country-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://bfblxtdnbaykxgvzlevx.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmYmx4dGRuYmF5a3hndnpsZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNjY4MjAsImV4cCI6MjA5NzY0MjgyMH0.WewOgN8mWtTJ-oFr2C-8qirAKX707dU4TkjkZrd0JUs';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let allVisitors = [];
+
+        const flags = {
+            'Russia': '🇷🇺', 'Russian Federation': '🇷🇺', 'Россия': '🇷🇺',
+            'Ukraine': '🇺🇦', 'Украина': '🇺🇦', 'Kazakhstan': '🇰🇿', 'Казахстан': '🇰🇿',
+            'Belarus': '🇧🇾', 'Беларусь': '🇧🇾', 'Uzbekistan': '🇺🇿', 'Georgia': '🇬🇪',
+            'Germany': '🇩🇪', 'USA': '🇺🇸', 'United States': '🇺🇸', 'France': '🇫🇷',
+            'UK': '🇬🇧', 'United Kingdom': '🇬🇧', 'Turkey': '🇹🇷', 'Турция': '🇹🇷',
+            'China': '🇨🇳', 'Japan': '🇯🇵', 'South Korea': '🇰🇷',
+            'Brazil': '🇧🇷', 'India': '🇮🇳', 'Canada': '🇨🇦', 'Spain': '🇪🇸',
+            'Italy': '🇮🇹', 'Netherlands': '🇳🇱', 'Poland': '🇵🇱', 'Czech Republic': '🇨🇿',
+            'Azerbaijan': '🇦🇿', 'Armenia': '🇦🇲', 'Kyrgyzstan': '🇰🇬', 'Tajikistan': '🇹🇯',
+            'Mongolia': '🇲🇳', 'Israel': '🇮🇱', 'Thailand': '🇹🇭', 'Vietnam': '🇻🇳',
+            'Egypt': '🇪🇬', 'Nigeria': '🇳🇬', 'South Africa': '🇿🇦', 'Mexico': '🇲🇽',
+            'Argentina': '🇦🇷', 'Colombia': '🇨🇴', 'Chile': '🇨🇱', 'Peru': '🇵🇪',
+            'Indonesia': '🇮🇩', 'Philippines': '🇵🇭', 'Malaysia': '🇲🇾', 'Singapore': '🇸🇬',
+            'Australia': '🇦🇺', 'New Zealand': '🇳🇿', 'Sweden': '🇸🇪', 'Norway': '🇳🇴',
+            'Finland': '🇫🇮', 'Denmark': '🇩🇰', 'Switzerland': '🇨🇭', 'Austria': '🇦🇹',
+            'Portugal': '🇵🇹', 'Greece': '🇬🇷', 'Romania': '🇷🇴', 'Hungary': '🇭🇺',
+            'Croatia': '🇭🇷', 'Serbia': '🇷🇸', 'Bulgaria': '🇧🇬', 'Slovakia': '🇸🇰',
+            'Slovenia': '🇸🇮', 'Lithuania': '🇱🇹', 'Latvia': '🇱🇻', 'Estonia': '🇪🇪',
+            'Ireland': '🇮🇪', 'Iceland': '🇮🇸', 'Luxembourg': '🇱🇺', 'Cyprus': '🇨🇾',
+            'Malta': '🇲🇹', 'Lebanon': '🇱🇧', 'Iran': '🇮🇷', 'Iraq': '🇮🇶',
+            'Saudi Arabia': '🇸🇦', 'UAE': '🇦🇪', 'Pakistan': '🇵🇰', 'Bangladesh': '🇧🇩',
+            'Sri Lanka': '🇱🇰', 'Nepal': '🇳🇵', 'Myanmar': '🇲🇲', 'Cambodia': '🇰🇭',
+            'Laos': '🇱🇦', 'Taiwan': '🇹🇼', 'Hong Kong': '🇭🇰'
+        };
+
+        function getFlag(country) { return flags[country] || '🌍'; }
+
+        function timeAgo(ts) {
+            const diff = Math.floor(Date.now() / 1000) - Math.floor(new Date(ts).getTime() / 1000);
+            if (diff < 60) return 'только что';
+            if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+            return Math.floor(diff / 86400) + ' дн назад';
+        }
+
+        function isToday(ts) {
+            const d = new Date(ts);
+            const now = new Date();
+            return d.toDateString() === now.toDateString();
+        }
+
+        async function refreshData() {
+            const { data } = await supabase.from('visitors').select('*').order('created_at', { ascending: false }).limit(200);
+            if (!data) return;
+
+            allVisitors = data;
+            renderAll(data);
+        }
+
+        function renderAll(visitors) {
+            const grid = document.getElementById('grid');
+            const today = visitors.filter(v => isToday(v.created_at));
+            const uniqueCities = [...new Set(visitors.map(v => v.city))];
+
+            document.getElementById('total-count').textContent = visitors.length;
+            document.getElementById('unique-count').textContent = uniqueCities.length;
+            document.getElementById('today-count').textContent = today.length;
+
+            if (visitors.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><div class="icon">📡</div><p>Пока нет данных. Кто-то должен зайти на сайт.</p></div>';
+                return;
+            }
+
+            grid.innerHTML = '';
+            visitors.forEach(v => {
+                const card = document.createElement('div');
+                card.className = 'visitor-card';
+                card.innerHTML =
+                    '<div class="v-flag">' + getFlag(v.country) + '</div>' +
+                    '<div class="v-info">' +
+                    '<div class="v-city">' + (v.city || 'Неизвестно') + '</div>' +
+                    '<div class="v-country">' + (v.country || '') + (v.region ? ', ' + v.region : '') + '</div>' +
+                    '<div class="v-time">' + timeAgo(v.created_at) + '</div>' +
+                    '</div>';
+                grid.appendChild(card);
+            });
+
+            const countryCount = {};
+            visitors.forEach(v => {
+                const c = v.country || 'Неизвестно';
+                countryCount[c] = (countryCount[c] || 0) + 1;
+            });
+
+            const sorted = Object.entries(countryCount).sort((a, b) => b[1] - a[1]);
+            const countryList = document.getElementById('country-list');
+            const section = document.getElementById('countries-section');
+
+            if (sorted.length > 0) {
+                section.style.display = 'block';
+                countryList.innerHTML = '';
+                sorted.forEach(([country, count]) => {
+                    const tag = document.createElement('div');
+                    tag.className = 'country-tag';
+                    tag.innerHTML = getFlag(country) + ' ' + country + ' <span class="count">' + count + '</span>';
+                    countryList.appendChild(tag);
+                });
+            }
+        }
+
+        function filterVisitors() {
+            const query = document.getElementById('search').value.toLowerCase();
+            const filtered = allVisitors.filter(v =>
+                (v.city || '').toLowerCase().includes(query) ||
+                (v.country || '').toLowerCase().includes(query) ||
+                (v.region || '').toLowerCase().includes(query)
+            );
+            renderAll(filtered);
+        }
+
+        refreshData();
+        setInterval(refreshData, 10000);
+    </script>
+</body>
+</html>
