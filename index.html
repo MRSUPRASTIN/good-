@@ -844,6 +844,125 @@
 
         .contact-form textarea { min-height: 150px; }
 
+        .payment-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .payment-modal-overlay.active { display: flex; }
+
+        .payment-modal {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.4);
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 0 60px rgba(0, 255, 65, 0.15);
+        }
+
+        .payment-modal h3 {
+            color: var(--green);
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+
+        .payment-modal .plan-price {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+        }
+
+        .payment-modal .wallet-label {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .payment-modal .wallet-addr {
+            background: #0d0d0d;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--green);
+            word-break: break-all;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 1rem;
+        }
+
+        .payment-modal .wallet-addr:hover { border-color: var(--green); }
+
+        .payment-modal .copy-hint {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-bottom: 1.5rem;
+        }
+
+        .payment-modal .btn-phantom {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #ab9ff2, #7c3aed);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+        }
+
+        .payment-modal .btn-phantom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.5);
+        }
+
+        .payment-modal .btn-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .payment-modal .btn-close:hover { color: var(--green); }
+
+        .payment-modal .copy-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--green);
+            color: var(--bg-dark);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100000;
+        }
+
+        .payment-modal .copy-toast.show { opacity: 1; }
+
         .social-links {
             display: flex;
             justify-content: center;
@@ -1207,7 +1326,7 @@
                     <li>Отчёт с рекомендациями</li>
                     <li>30 дней поддержки</li>
                 </ul>
-                <a href="#contact" class="btn" onclick="playClick()">Выбрать</a>
+                <button class="btn" onclick="openPaymentModal('Старт', '49 000 ₽'); playClick()">Выбрать</button>
             </div>
             <div class="price-card featured fade-in" onclick="playClick()">
                 <h3>Бизнес</h3>
@@ -1219,7 +1338,7 @@
                     <li>90 дней поддержки</li>
                     <li>Консультации</li>
                 </ul>
-                <a href="#contact" class="btn btn-primary" onclick="playClick()">Выбрать</a>
+                <button class="btn btn-primary" onclick="openPaymentModal('Бизнес', '149 000 ₽'); playClick()">Выбрать</button>
             </div>
             <div class="price-card fade-in" onclick="playClick()">
                 <h3>Корпоратив</h3>
@@ -1231,7 +1350,7 @@
                     <li>SLA 99.9%</li>
                     <li>Выделенный менеджер</li>
                 </ul>
-                <a href="#contact" class="btn" onclick="playClick()">Связаться</a>
+                <button class="btn" onclick="openPaymentModal('Корпоратив', 'Индивидуально'); playClick()">Связаться</button>
             </div>
         </div>
     </section>
@@ -1352,6 +1471,19 @@
     <footer>
         <p>© 2024 Добрый Хакер. Все права защищены. | <a href="#">Политика конфиденциальности</a></p>
     </footer>
+
+    <div class="payment-modal-overlay" id="payment-modal-overlay">
+        <div class="payment-modal">
+            <button class="btn-close" onclick="closePaymentModal()">&times;</button>
+            <h3 id="payment-plan-name">Старт</h3>
+            <div class="plan-price" id="payment-plan-price">49 000 ₽</div>
+            <div class="wallet-label">Phantom кошелёк (SOL):</div>
+            <div class="wallet-addr" id="wallet-address" onclick="copyWallet()">HyBNXwysyHTeRwBrZGsiyAiKe3PmrvsQqHbRvF841wZ1</div>
+            <div class="copy-hint">Нажмите на адрес чтобы скопировать</div>
+            <button class="btn-phantom" onclick="openPhantom()">Открыть Phantom</button>
+        </div>
+    </div>
+    <div class="copy-toast" id="copy-toast">Адрес скопирован!</div>
 
     <div class="chat-widget">
         <button class="chat-btn" onclick="toggleChat(); playClick()">💬</button>
@@ -1724,6 +1856,35 @@
                 messages.innerHTML += '<div class="chat-message bot">' + replies[Math.floor(Math.random() * replies.length)] + '</div>';
                 messages.scrollTop = messages.scrollHeight;
             }, 1000);
+        }
+        const WALLET_ADDRESS = 'HyBNXwysyHTeRwBrZGsiyAiKe3PmrvsQqHbRvF841wZ1';
+
+        function openPaymentModal(plan, price) {
+            document.getElementById('payment-plan-name').textContent = plan;
+            document.getElementById('payment-plan-price').textContent = price;
+            document.getElementById('wallet-address').textContent = WALLET_ADDRESS;
+            document.getElementById('payment-modal-overlay').classList.add('active');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal-overlay').classList.remove('active');
+        }
+
+        document.getElementById('payment-modal-overlay').addEventListener('click', function(e) {
+            if (e.target === this) closePaymentModal();
+        });
+
+        function copyWallet() {
+            navigator.clipboard.writeText(WALLET_ADDRESS).then(() => {
+                const toast = document.getElementById('copy-toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            });
+        }
+
+        function openPhantom() {
+            const url = 'https://phantom.app/ul/' + encodeURIComponent('solana:' + WALLET_ADDRESS);
+            window.open(url, '_blank');
         }
     </script>
 </body>
