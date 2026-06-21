@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добрый Хакер — Этичный Хакинг и Кибербезопасность</title>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1316,6 +1317,142 @@
             50% { opacity: 1; }
         }
 
+        .visitors-panel {
+            position: fixed;
+            bottom: 6rem;
+            left: 2rem;
+            z-index: 1000;
+            width: 320px;
+            max-height: 420px;
+            background: linear-gradient(160deg, rgba(10,10,10,0.96), rgba(0,255,65,0.03));
+            border: 1px solid rgba(0,255,65,0.2);
+            border-radius: 14px;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px rgba(0,255,65,0.07);
+            overflow: hidden;
+            transition: all 0.4s;
+        }
+
+        .visitors-panel .vp-header {
+            background: rgba(0,255,65,0.08);
+            border-bottom: 1px solid rgba(0,255,65,0.15);
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .visitors-panel .vp-header h4 {
+            color: var(--green);
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .visitors-panel .vp-header h4 .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff41;
+            border-radius: 50%;
+            animation: livePulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,65,0.5); }
+            50% { opacity: 0.6; box-shadow: 0 0 8px 3px rgba(0,255,65,0.2); }
+        }
+
+        .visitors-panel .vp-header .vp-count {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            background: rgba(0,255,65,0.1);
+            padding: 0.2rem 0.6rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .visitors-panel .vp-list {
+            max-height: 310px;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .visitors-panel .vp-list::-webkit-scrollbar { width: 4px; }
+        .visitors-panel .vp-list::-webkit-scrollbar-track { background: transparent; }
+        .visitors-panel .vp-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.3); border-radius: 2px; }
+
+        .visitors-panel .vp-item {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.65rem 0.8rem;
+            border-radius: 8px;
+            transition: background 0.2s;
+            animation: vpSlideIn 0.4s ease-out;
+        }
+
+        @keyframes vpSlideIn {
+            from { opacity: 0; transform: translateX(-15px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .visitors-panel .vp-item:hover { background: rgba(0,255,65,0.05); }
+
+        .visitors-panel .vp-item .vp-flag {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .visitors-panel .vp-item .vp-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .visitors-panel .vp-item .vp-city {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .visitors-panel .vp-item .vp-time {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .visitors-panel .vp-item.is-new {
+            background: rgba(0,255,65,0.08);
+            border: 1px solid rgba(0,255,65,0.15);
+        }
+
+        .visitors-panel .vp-empty {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        .visitors-panel .vp-footer {
+            border-top: 1px solid rgba(0,255,65,0.1);
+            padding: 0.6rem 1rem;
+            text-align: center;
+        }
+
+        .visitors-panel .vp-toggle {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .visitors-panel .vp-toggle:hover { color: var(--green); }
+
         footer {
             text-align: center;
             padding: 3rem 2rem;
@@ -1363,6 +1500,19 @@
                 <div class="dot"></div><div class="dot"></div><div class="dot"></div>
                 <span>Определяем город...</span>
             </div>
+        </div>
+    </div>
+
+    <div class="visitors-panel" id="visitors-panel">
+        <div class="vp-header">
+            <h4><span class="live-dot"></span> Посетители онлайн</h4>
+            <span class="vp-count" id="vp-count">0</span>
+        </div>
+        <div class="vp-list" id="vp-list">
+            <div class="vp-empty">Ожидаем посетителей...</div>
+        </div>
+        <div class="vp-footer">
+            <button class="vp-toggle" onclick="toggleVisitorsPanel()">Свернуть</button>
         </div>
     </div>
 
@@ -2199,39 +2349,85 @@
         });
 
         (function() {
+            const SUPABASE_URL = 'https://bfblxtdnbaykxgvzlevx.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmYmx4dGRuYmF5a3hndnpsZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNjY4MjAsImV4cCI6MjA5NzY0MjgyMH0.WewOgN8mWtTJ-oFr2C-8qirAKX707dU4TkjkZrd0JUs';
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
             const widget = document.getElementById('city-widget');
             const icon = document.getElementById('city-icon');
             const info = document.getElementById('city-info');
+            const vpList = document.getElementById('vp-list');
+            const vpCount = document.getElementById('vp-count');
+            let panelCollapsed = false;
+
             const flags = {
                 'Russia': '🇷🇺', 'Russian Federation': '🇷🇺', 'Москва': '🇷🇺', 'Россия': '🇷🇺',
                 'Ukraine': '🇺🇦', 'Украина': '🇺🇦', 'Kazakhstan': '🇰🇿', 'Казахстан': '🇰🇿',
                 'Belarus': '🇧🇾', 'Беларусь': '🇧🇾', 'Uzbekistan': '🇺🇿', 'Georgia': '🇬🇪',
                 'Germany': '🇩🇪', 'USA': '🇺🇸', 'United States': '🇺🇸', 'France': '🇫🇷',
                 'UK': '🇬🇧', 'United Kingdom': '🇬🇧', 'Turkey': '🇹🇷', 'Турция': '🇹🇷',
-                'China': '🇨🇳', 'Japan': '🇯🇵', 'Japan': '🇯🇵', 'South Korea': '🇰🇷',
+                'China': '🇨🇳', 'Japan': '🇯🇵', 'South Korea': '🇰🇷',
                 'Brazil': '🇧🇷', 'India': '🇮🇳', 'Canada': '🇨🇦', 'Spain': '🇪🇸',
                 'Italy': '🇮🇹', 'Netherlands': '🇳🇱', 'Poland': '🇵🇱', 'Czech Republic': '🇨🇿',
                 'Azerbaijan': '🇦🇿', 'Armenia': '🇦🇲', 'Kyrgyzstan': '🇰🇬', 'Tajikistan': '🇹🇯',
                 'Mongolia': '🇲🇳', 'Israel': '🇮🇱', 'Thailand': '🇹🇭', 'Vietnam': '🇻🇳',
                 'Egypt': '🇪🇬', 'Nigeria': '🇳🇬', 'South Africa': '🇿🇦', 'Mexico': '🇲🇽',
-                'Argentina': '🇦🇷', 'Colombia': '🇨🇴', 'Chile': '🇨🇱', 'Peru': '🇵🇪'
+                'Argentina': '🇦🇷', 'Colombia': '🇨🇴', 'Chile': '🇨🇱', 'Peru': '🇵🇪',
+                'Indonesia': '🇮🇩', 'Philippines': '🇵🇭', 'Malaysia': '🇲🇾', 'Singapore': '🇸🇬',
+                'Australia': '🇦🇺', 'New Zealand': '🇳🇿', 'Sweden': '🇸🇪', 'Norway': '🇳🇴',
+                'Finland': '🇫🇮', 'Denmark': '🇩🇰', 'Switzerland': '🇨🇭', 'Austria': '🇦🇹',
+                'Portugal': '🇵🇹', 'Greece': '🇬🇷', 'Romania': '🇷🇴', 'Hungary': '🇭🇺',
+                'Croatia': '🇭🇷', 'Serbia': '🇷🇸', 'Bulgaria': '🇧🇬', 'Slovakia': '🇸🇰',
+                'Slovenia': '🇸🇮', 'Lithuania': '🇱🇹', 'Latvia': '🇱🇻', 'Estonia': '🇪🇪',
+                'Ireland': '🇮🇪', 'Iceland': '🇮🇸', 'Luxembourg': '🇱🇺', 'Cyprus': '🇨🇾',
+                'Malta': '🇲🇹', 'Lebanon': '🇱🇧', 'Iran': '🇮🇷', 'Iraq': '🇮🇶',
+                'Saudi Arabia': '🇸🇦', 'UAE': '🇦🇪', 'Pakistan': '🇵🇰', 'Bangladesh': '🇧🇩',
+                'Sri Lanka': '🇱🇰', 'Nepal': '🇳🇵', 'Myanmar': '🇲🇲', 'Cambodia': '🇰🇭',
+                'Laos': '🇱🇦', 'Taiwan': '🇹🇼', 'Hong Kong': '🇭🇰'
             };
+
+            function getFlag(country) { return flags[country] || '🌍'; }
+
+            function timeAgo(ts) {
+                const diff = Math.floor(Date.now() / 1000) - Math.floor(new Date(ts).getTime() / 1000);
+                if (diff < 60) return 'только что';
+                if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
+                if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+                return Math.floor(diff / 86400) + ' дн назад';
+            }
+
+            function renderVisitor(item, isNew) {
+                const el = document.createElement('div');
+                el.className = 'vp-item' + (isNew ? ' is-new' : '');
+                el.innerHTML =
+                    '<span class="vp-flag">' + getFlag(item.country) + '</span>' +
+                    '<div class="vp-details">' +
+                    '<div class="vp-city">' + item.city + (item.region ? ', ' + item.region : '') + '</div>' +
+                    '<div class="vp-time">' + timeAgo(item.created_at) + '</div>' +
+                    '</div>';
+                return el;
+            }
 
             widget.classList.add('visible');
 
             fetch('https://ipapi.co/json/')
                 .then(r => r.json())
-                .then(data => {
+                .then(async data => {
                     const city = data.city || 'Неизвестно';
                     const region = data.region || '';
                     const country = data.country_name || '';
-                    const flag = flags[country] || '🌍';
 
-                    icon.textContent = flag;
-
+                    icon.textContent = getFlag(country);
                     info.innerHTML =
                         '<div class="city-label">Ваш город</div>' +
                         '<div class="city-name">' + city + (region ? ', ' + region : '') + '</div>';
+
+                    await supabase.from('visitors').insert({
+                        city: city,
+                        region: region,
+                        country: country,
+                        flag: getFlag(country)
+                    });
 
                     setTimeout(() => {
                         widget.style.transition = 'opacity 1s, transform 1s';
@@ -2245,7 +2441,6 @@
                     info.innerHTML =
                         '<div class="city-label">Локация</div>' +
                         '<div class="city-name">Определить не удалось</div>';
-
                     setTimeout(() => {
                         widget.style.transition = 'opacity 1s, transform 1s';
                         widget.style.opacity = '0';
@@ -2253,6 +2448,38 @@
                         setTimeout(() => { widget.style.display = 'none'; }, 1000);
                     }, 3000);
                 });
+
+            async function loadVisitors() {
+                const { data } = await supabase.from('visitors').select('*').order('created_at', { ascending: false }).limit(50);
+                if (!data) return;
+
+                vpList.innerHTML = '';
+                if (data.length === 0) {
+                    vpList.innerHTML = '<div class="vp-empty">Ожидаем посетителей...</div>';
+                    return;
+                }
+
+                data.forEach(item => {
+                    vpList.appendChild(renderVisitor(item, false));
+                });
+                vpCount.textContent = data.length;
+            }
+
+            loadVisitors();
+            setInterval(loadVisitors, 15000);
+
+            window.toggleVisitorsPanel = function() {
+                const panel = document.getElementById('visitors-panel');
+                const footer = panel.querySelector('.vp-footer .vp-toggle');
+                panelCollapsed = !panelCollapsed;
+                if (panelCollapsed) {
+                    panel.querySelector('.vp-list').style.display = 'none';
+                    footer.textContent = 'Развернуть';
+                } else {
+                    panel.querySelector('.vp-list').style.display = 'block';
+                    footer.textContent = 'Свернуть';
+                }
+            };
         })();
     </script>
 </body>
