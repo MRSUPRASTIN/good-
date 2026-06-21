@@ -1222,6 +1222,100 @@
 
         .newsletter-form input:focus { outline: none; border-color: var(--green); }
 
+        .city-widget {
+            position: fixed;
+            top: 5.5rem;
+            right: 2rem;
+            z-index: 1000;
+            background: linear-gradient(135deg, rgba(17,17,17,0.95), rgba(0,255,65,0.05));
+            border: 1px solid rgba(0,255,65,0.25);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0,255,65,0.1);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        .city-widget.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .city-widget .city-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(0,255,65,0.12);
+            border: 1px solid rgba(0,255,65,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            animation: cityPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes cityPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,65,0.3); }
+            50% { box-shadow: 0 0 12px 4px rgba(0,255,65,0.15); }
+        }
+
+        .city-widget .city-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .city-widget .city-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .city-widget .city-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--green);
+            text-shadow: 0 0 10px rgba(0,255,65,0.3);
+        }
+
+        .city-widget .city-flag {
+            font-size: 0.85rem;
+            margin-left: 0.25rem;
+        }
+
+        .city-widget .city-loading {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .city-widget .city-loading .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: dotBlink 1s ease-in-out infinite;
+        }
+
+        .city-widget .city-loading .dot:nth-child(2) { animation-delay: 0.2s; }
+        .city-widget .city-loading .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotBlink {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
         footer {
             text-align: center;
             padding: 3rem 2rem;
@@ -1261,6 +1355,16 @@
 
     <div class="custom-cursor" id="cursor"></div>
     <div class="custom-cursor-dot" id="cursor-dot"></div>
+
+    <div class="city-widget" id="city-widget">
+        <div class="city-icon" id="city-icon">📍</div>
+        <div class="city-info" id="city-info">
+            <div class="city-loading">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                <span>Определяем город...</span>
+            </div>
+        </div>
+    </div>
 
     <div id="reading-progress"></div>
     <div class="noise-overlay"></div>
@@ -2093,6 +2197,63 @@
                 });
             }
         });
+
+        (function() {
+            const widget = document.getElementById('city-widget');
+            const icon = document.getElementById('city-icon');
+            const info = document.getElementById('city-info');
+            const flags = {
+                'Russia': '🇷🇺', 'Russian Federation': '🇷🇺', 'Москва': '🇷🇺', 'Россия': '🇷🇺',
+                'Ukraine': '🇺🇦', 'Украина': '🇺🇦', 'Kazakhstan': '🇰🇿', 'Казахстан': '🇰🇿',
+                'Belarus': '🇧🇾', 'Беларусь': '🇧🇾', 'Uzbekistan': '🇺🇿', 'Georgia': '🇬🇪',
+                'Germany': '🇩🇪', 'USA': '🇺🇸', 'United States': '🇺🇸', 'France': '🇫🇷',
+                'UK': '🇬🇧', 'United Kingdom': '🇬🇧', 'Turkey': '🇹🇷', 'Турция': '🇹🇷',
+                'China': '🇨🇳', 'Japan': '🇯🇵', 'Japan': '🇯🇵', 'South Korea': '🇰🇷',
+                'Brazil': '🇧🇷', 'India': '🇮🇳', 'Canada': '🇨🇦', 'Spain': '🇪🇸',
+                'Italy': '🇮🇹', 'Netherlands': '🇳🇱', 'Poland': '🇵🇱', 'Czech Republic': '🇨🇿',
+                'Azerbaijan': '🇦🇿', 'Armenia': '🇦🇲', 'Kyrgyzstan': '🇰🇬', 'Tajikistan': '🇹🇯',
+                'Mongolia': '🇲🇳', 'Israel': '🇮🇱', 'Thailand': '🇹🇭', 'Vietnam': '🇻🇳',
+                'Egypt': '🇪🇬', 'Nigeria': '🇳🇬', 'South Africa': '🇿🇦', 'Mexico': '🇲🇽',
+                'Argentina': '🇦🇷', 'Colombia': '🇨🇴', 'Chile': '🇨🇱', 'Peru': '🇵🇪'
+            };
+
+            widget.classList.add('visible');
+
+            fetch('https://ipapi.co/json/')
+                .then(r => r.json())
+                .then(data => {
+                    const city = data.city || 'Неизвестно';
+                    const region = data.region || '';
+                    const country = data.country_name || '';
+                    const flag = flags[country] || '🌍';
+
+                    icon.textContent = flag;
+
+                    info.innerHTML =
+                        '<div class="city-label">Ваш город</div>' +
+                        '<div class="city-name">' + city + (region ? ', ' + region : '') + '</div>';
+
+                    setTimeout(() => {
+                        widget.style.transition = 'opacity 1s, transform 1s';
+                        widget.style.opacity = '0';
+                        widget.style.transform = 'translateY(-10px)';
+                        setTimeout(() => { widget.style.display = 'none'; }, 1000);
+                    }, 5000);
+                })
+                .catch(() => {
+                    icon.textContent = '🌐';
+                    info.innerHTML =
+                        '<div class="city-label">Локация</div>' +
+                        '<div class="city-name">Определить не удалось</div>';
+
+                    setTimeout(() => {
+                        widget.style.transition = 'opacity 1s, transform 1s';
+                        widget.style.opacity = '0';
+                        widget.style.transform = 'translateY(-10px)';
+                        setTimeout(() => { widget.style.display = 'none'; }, 1000);
+                    }, 3000);
+                });
+        })();
     </script>
 </body>
 </html>
