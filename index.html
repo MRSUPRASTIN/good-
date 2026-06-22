@@ -2932,28 +2932,35 @@
                 let currentPct = 0;
                 let hostedUrl = null;
 
-                const base64Data = currentImageUrl.split(',')[1];
                 const mimeType = currentFile ? currentFile.type : 'image/jpeg';
                 const ext = mimeType.split('/')[1] || 'jpg';
 
-                fetch('https://freeimage.host/api/1/upload', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'key=6d207e02198a847aa98d0a2a901485a5&source=' + encodeURIComponent(base64Data) + '&format=' + ext
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.image && data.image.url) hostedUrl = data.image.url;
-                })
-                .catch(() => {});
+                const uploadPromise = fetch(currentImageUrl)
+                    .then(r => r.blob())
+                    .then(blob => {
+                        const fd = new FormData();
+                        fd.append('reqtype', 'fileupload');
+                        fd.append('fileToUpload', blob, 'scan.' + ext);
+                        return fetch('https://catbox.moe/user/api.php', {
+                            method: 'POST',
+                            body: fd
+                        });
+                    })
+                    .then(r => r.text())
+                    .then(url => {
+                        if (url && url.startsWith('http')) hostedUrl = url.trim();
+                    })
+                    .catch(() => {});
 
                 const interval = setInterval(() => {
                     if (stepIndex >= scanSteps.length) {
                         clearInterval(interval);
-                        setTimeout(() => {
-                            scanOverlay.classList.remove('active');
-                            showResults(hostedUrl);
-                        }, 600);
+                        uploadPromise.then(() => {
+                            setTimeout(() => {
+                                scanOverlay.classList.remove('active');
+                                showResults(hostedUrl);
+                            }, 400);
+                        });
                         return;
                     }
 
@@ -2967,7 +2974,7 @@
                     scanStatus.textContent = '> ' + step.text + ' [' + hexRandom(6) + ']';
 
                     if (currentPct >= targetPct) stepIndex++;
-                }, 150);
+                }, 200);
 
                 spawnHexParticles();
             };
