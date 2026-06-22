@@ -1553,6 +1553,115 @@
             text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
         }
 
+        .results-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .results-tab {
+            padding: 0.6rem 1.2rem;
+            background: rgba(0,255,65,0.05);
+            border: 1px solid rgba(0,255,65,0.2);
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .results-tab:hover, .results-tab.active {
+            border-color: var(--green);
+            color: var(--green);
+            background: rgba(0,255,65,0.1);
+        }
+
+        .results-tab.active {
+            box-shadow: 0 0 15px rgba(0,255,65,0.2);
+        }
+
+        .iframe-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            border: 1px solid rgba(0,255,65,0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #0d0d0d;
+            position: relative;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            display: block;
+        }
+
+        .iframe-fallback {
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-dim);
+            display: none;
+        }
+
+        .iframe-fallback.active { display: block; }
+
+        .iframe-fallback a {
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .iframe-fallback a:hover { text-decoration: underline; }
+
+        .uploaded-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .uploaded-preview img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 10px;
+            border: 2px solid rgba(0,255,65,0.3);
+            object-fit: contain;
+            background: #111;
+            padding: 4px;
+        }
+
+        .uploaded-preview .preview-info {
+            text-align: left;
+        }
+
+        .uploaded-preview .preview-info p {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .uploaded-preview .preview-info .hosted-url {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--green);
+            word-break: break-all;
+            background: rgba(0,255,65,0.05);
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid rgba(0,255,65,0.15);
+            max-width: 400px;
+        }
+
         .results-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -2063,9 +2172,16 @@
         </div>
 
         <div class="scan-results" id="scan-results">
-            <h3>✅ Поиск завершён!</h3>
-            <p style="color:var(--text-dim);margin-bottom:1.5rem;font-size:0.95rem;" id="scan-results-hint">Выберите поисковую систему для просмотра результатов</p>
-            <div class="results-grid" id="results-grid"></div>
+            <h3>✅ Результаты поиска</h3>
+            <div class="uploaded-preview" id="uploaded-preview"></div>
+            <div class="results-tabs" id="results-tabs"></div>
+            <div class="iframe-container" id="iframe-container">
+                <iframe id="results-iframe" src="about:blank"></iframe>
+                <div class="iframe-fallback" id="iframe-fallback">
+                    <p>⚠️ Поисковик заблокировал встраивание.</p>
+                    <p>Откройте результат в новой вкладке: <a id="fallback-link" href="#" target="_blank">открыть поиск</a></p>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -2982,46 +3098,84 @@
 
             function showResults(hostedUrl) {
                 scanResults.classList.add('active');
-                const hintEl = document.getElementById('scan-results-hint');
+
+                const previewEl = document.getElementById('uploaded-preview');
+                const tabsEl = document.getElementById('results-tabs');
+                const iframe = document.getElementById('results-iframe');
+                const fallback = document.getElementById('iframe-fallback');
+                const fallbackLink = document.getElementById('fallback-link');
+
+                previewEl.innerHTML =
+                    '<img src="' + currentImageUrl + '" alt="uploaded">' +
+                    '<div class="preview-info">' +
+                    '<p>Изображение загружено:</p>' +
+                    '<div class="hosted-url">' + (hostedUrl || 'Хостинг недоступен') + '</div>' +
+                    '</div>';
 
                 const engines = [];
-
                 if (hostedUrl) {
-                    hintEl.textContent = 'Изображение загружено! Кликните для поиска:';
                     const eu = encodeURIComponent(hostedUrl);
                     engines.push(
-                        { icon: '🔵', name: 'Google Lens', desc: 'Поиск по изображению', url: 'https://lens.google.com/uploadbyurl?url=' + eu },
-                        { icon: '🟡', name: 'Yandex Картинки', desc: 'Яндекс поиск', url: 'https://yandex.com/images/search?rpt=imageview&url=' + eu },
-                        { icon: '🟢', name: 'TinEye', desc: 'Reverse image search', url: 'https://tineye.com/search?url=' + eu },
-                        { icon: '🔷', name: 'Bing Visual', desc: 'Microsoft search', url: 'https://www.bing.com/images/search?view=detailv2&iss=sbi&form=SBIVSP&q=imgurl:' + eu },
-                        { icon: '🟠', name: 'Baidu 识图', desc: '百度图片搜索', url: 'https://graph.baidu.com/details?isfromtus498=1&tn=pc&carousel=0&image=' + eu },
-                        { icon: '🟣', name: 'SauceNAO', desc: 'Anime & Manga', url: 'https://saucenao.com/search.php?db=999&url=' + eu }
+                        { icon: '🔵', name: 'Google Lens', url: 'https://lens.google.com/uploadbyurl?url=' + eu },
+                        { icon: '🟡', name: 'Yandex', url: 'https://yandex.com/images/search?rpt=imageview&url=' + eu },
+                        { icon: '🟢', name: 'TinEye', url: 'https://tineye.com/search?url=' + eu },
+                        { icon: '🔷', name: 'Bing', url: 'https://www.bing.com/images/search?view=detailv2&iss=sbi&form=SBIVSP&q=imgurl:' + eu },
+                        { icon: '🟠', name: 'Baidu', url: 'https://graph.baidu.com/details?isfromtus498=1&tn=pc&carousel=0&image=' + eu }
                     );
                 } else {
-                    hintEl.textContent = 'Хостинг недоступен. Откройте поиск и загрузите фото вручную:';
                     engines.push(
-                        { icon: '🔵', name: 'Google Lens', desc: 'Загрузите фото вручную', url: 'https://lens.google.com/' },
-                        { icon: '🟡', name: 'Yandex Картинки', desc: 'Загрузите фото вручную', url: 'https://yandex.com/images/' },
-                        { icon: '🟢', name: 'TinEye', desc: 'Загрузите фото вручную', url: 'https://tineye.com/' },
-                        { icon: '🔷', name: 'Bing Visual', desc: 'Загрузите фото вручную', url: 'https://www.bing.com/images' },
-                        { icon: '🟠', name: 'Baidu 识图', desc: 'Загрузите фото вручную', url: 'https://graph.baidu.com/pcpage/index?tpl_from=pc' },
-                        { icon: '🟣', name: 'SauceNAO', desc: 'Загрузите фото вручную', url: 'https://saucenao.com/' }
+                        { icon: '🔵', name: 'Google Lens', url: 'https://lens.google.com/' },
+                        { icon: '🟡', name: 'Yandex', url: 'https://yandex.com/images/' },
+                        { icon: '🟢', name: 'TinEye', url: 'https://tineye.com/' },
+                        { icon: '🔷', name: 'Bing', url: 'https://www.bing.com/images' },
+                        { icon: '🟠', name: 'Baidu', url: 'https://graph.baidu.com/pcpage/index?tpl_from=pc' }
                     );
                 }
 
-                resultsGrid.innerHTML = '';
-                engines.forEach(engine => {
-                    const div = document.createElement('div');
-                    div.className = 'result-card';
-                    div.innerHTML =
-                        '<span class="result-icon">' + engine.icon + '</span>' +
-                        '<span class="result-name">' + engine.name + '</span>' +
-                        '<span class="result-desc">' + engine.desc + '</span>';
-                    div.addEventListener('click', function() {
-                        window.open(engine.url, '_blank');
+                tabsEl.innerHTML = '';
+                engines.forEach((eng, i) => {
+                    const btn = document.createElement('div');
+                    btn.className = 'results-tab' + (i === 0 ? ' active' : '');
+                    btn.innerHTML = eng.icon + ' ' + eng.name;
+                    btn.addEventListener('click', function() {
+                        tabsEl.querySelectorAll('.results-tab').forEach(t => t.classList.remove('active'));
+                        btn.classList.add('active');
+                        loadEngine(eng);
                     });
-                    resultsGrid.appendChild(div);
+                    tabsEl.appendChild(btn);
                 });
+
+                function loadEngine(eng) {
+                    fallback.classList.remove('active');
+                    iframe.style.display = 'block';
+                    iframe.src = eng.url;
+                    fallbackLink.href = eng.url;
+
+                    iframe.onload = function() {
+                        try {
+                            var loc = iframe.contentWindow.location.href;
+                            if (loc === 'about:blank' || loc.includes('blocked') || loc.includes('error')) {
+                                iframe.style.display = 'none';
+                                fallback.classList.add('active');
+                            }
+                        } catch(e) {
+                            iframe.style.display = 'none';
+                            fallback.classList.add('active');
+                        }
+                    };
+
+                    setTimeout(function() {
+                        try {
+                            var loc = iframe.contentWindow.location.href;
+                            if (loc === 'about:blank') {
+                                iframe.style.display = 'none';
+                                fallback.classList.add('active');
+                            }
+                        } catch(e) {}
+                    }, 3000);
+                }
+
+                if (engines.length > 0) loadEngine(engines[0]);
             }
         })();
     </script>
