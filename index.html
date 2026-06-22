@@ -3194,12 +3194,29 @@
                         spinner.classList.remove('active');
                         if (images && images.length > 0) {
                             similarTitle.classList.add('active');
+                            var hasThumb = images.some(function(img) { return img.thumb; });
                             images.forEach(function(img) {
                                 var card = document.createElement('div');
                                 card.className = 'similar-card';
-                                card.innerHTML =
-                                    '<img src="' + img.thumb + '" alt="similar" onerror="this.parentElement.style.display=\'none\'">' +
-                                    '<div class="sim-source">' + (img.source || 'Источник') + '</div>';
+                                if (img.thumb) {
+                                    card.innerHTML =
+                                        '<img src="' + img.thumb + '" alt="similar" onerror="this.parentElement.style.display=\'none\'">' +
+                                        '<div class="sim-source">' + (img.source || 'Источник') + '</div>';
+                                } else {
+                                    card.style.cursor = img.url ? 'pointer' : 'default';
+                                    card.style.padding = '1rem';
+                                    card.style.textAlign = 'left';
+                                    card.innerHTML =
+                                        '<div style="color:var(--text);font-size:0.85rem;line-height:1.5;">' +
+                                        (img.source || 'Нет данных') +
+                                        '</div>';
+                                    if (img.url) {
+                                        var linkHint = document.createElement('div');
+                                        linkHint.style.cssText = 'margin-top:0.5rem;font-size:0.7rem;color:var(--green);';
+                                        linkHint.textContent = '→ Найти в Google Images';
+                                        card.appendChild(linkHint);
+                                    }
+                                }
                                 if (img.url) {
                                     card.addEventListener('click', function() { window.open(img.url, '_blank'); });
                                 }
@@ -3232,44 +3249,65 @@
             }
 
             function fetchSimilarImages(url, callback) {
-                var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://yandex.com/images/search?rpt=imageview&url=' + url);
+                var apiKey = 'om-27K9UiCivGPcGbaqwZ9EcmXvogEbpZSDDLKS7r5nZrq';
+                var apiUrl = 'https://api.openmodel.app/v1/chat/completions';
 
-                fetch(proxyUrl)
-                    .then(function(r) { return r.text(); })
-                    .then(function(html) {
-                        var results = [];
-                        var regex = /\"thumb\":\s*\"(https?:\/\/[^\"]+)\"/g;
-                        var titleRegex = /\"title\":\s*\"([^\"]*)\"/g;
-                        var origRegex = /\"origUrl\":\s*\{\s*\"href\":\s*\"(https?:\/\/[^\"]+)\"/g;
+                var systemPrompt = 'Ты эксперт по визуальному анализу изображений. Проанализируй загруженное изображение и верни JSON с полями: description (описание на русском, 2-3 предложения), keywords (массив из 5-8 ключевых слов/фраз для поиска похожих изображений на английском языке), category (категория изображения). Отвечай ТОЛЬКО валидным JSON без markdown.';
 
-                        var thumbMatches = html.match(regex) || [];
-                        var origMatches = html.match(origRegex) || [];
-
-                        for (var i = 0; i < Math.min(thumbMatches.length, 20); i++) {
-                            var thumb = thumbMatches[i].replace(/\"thumb\":\s*\"/, '').replace(/\"$/, '');
-                            var orig = origMatches[i] ? origMatches[i].replace(/\"origUrl\":\s*\{\s*\"href\":\s*\"/, '').replace(/\"$/, '') : '';
-                            if (thumb && thumb.startsWith('http')) {
-                                results.push({ thumb: thumb, url: orig, source: 'Yandex Images' });
+                fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiKey
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-v4-flash',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            {
+                                role: 'user',
+                                content: [
+                                    { type: 'text', text: 'Проанализируй это изображение. Опиши его содержимое, определи категорию и составь список ключевых слов для поиска похожих изображений в интернете.' },
+                                    { type: 'image_url', image_url: { url: url } }
+                                ]
                             }
-                        }
-
-                        if (results.length === 0) {
-                            var imgRegex = /https?:\/\/avatars\.mds\.yandex\.net\/[^\s\"']+\.jpg/g;
-                            var imgMatches = html.match(imgRegex) || [];
-                            var seen = {};
-                            imgMatches.forEach(function(m) {
-                                if (!seen[m] && m.includes('size')) {
-                                    seen[m] = true;
-                                    results.push({ thumb: m, url: '', source: 'Yandex Images' });
-                                }
+                        ],
+                        temperature: 0.3,
+                        max_tokens: 800
+                    })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var results = [];
+                    var text = '';
+                    try {
+                        text = data.choices[0].message.content;
+                        var cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+                        var parsed = JSON.parse(cleaned);
+                        if (parsed.keywords && parsed.keywords.length > 0) {
+                            parsed.keywords.forEach(function(kw) {
+                                results.push({
+                                    thumb: '',
+                                    url: 'https://www.google.com/search?q=' + encodeURIComponent(kw) + '&tbm=isch',
+                                    source: kw
+                                });
                             });
                         }
-
-                        callback(results);
-                    })
-                    .catch(function() {
-                        callback([]);
-                    });
+                        if (parsed.description) {
+                            results.unshift({
+                                thumb: '',
+                                url: '',
+                                source: '📝 ' + parsed.description
+                            });
+                        }
+                    } catch(e) {
+                        results.push({ thumb: '', url: '', source: text || 'Анализ недоступен' });
+                    }
+                    callback(results);
+                })
+                .catch(function() {
+                    callback([]);
+                });
             }
         })();
     </script>
