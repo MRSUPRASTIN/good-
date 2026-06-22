@@ -2939,16 +2939,17 @@
                     .then(r => r.blob())
                     .then(blob => {
                         const fd = new FormData();
-                        fd.append('reqtype', 'fileupload');
-                        fd.append('fileToUpload', blob, 'scan.' + ext);
-                        return fetch('https://catbox.moe/user/api.php', {
+                        fd.append('file', blob, 'scan.jpg');
+                        return fetch('https://telegra.ph/upload', {
                             method: 'POST',
                             body: fd
                         });
                     })
-                    .then(r => r.text())
-                    .then(url => {
-                        if (url && url.startsWith('http')) hostedUrl = url.trim();
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data[0] && data[0].src) {
+                            hostedUrl = 'https://telegra.ph' + data[0].src;
+                        }
                     })
                     .catch(() => {});
 
