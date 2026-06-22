@@ -1573,7 +1573,7 @@
             flex-direction: column;
             align-items: center;
             gap: 0.75rem;
-            cursor: none;
+            cursor: pointer;
         }
 
         .result-card:hover {
@@ -2063,8 +2063,8 @@
         </div>
 
         <div class="scan-results" id="scan-results">
-            <h3>✅ Похожие изображения найдены!</h3>
-            <p style="color:var(--text-dim);margin-bottom:1.5rem;font-size:0.95rem;">Выберите поисковую систему для просмотра результатов</p>
+            <h3>✅ Поиск завершён!</h3>
+            <p style="color:var(--text-dim);margin-bottom:1.5rem;font-size:0.95rem;" id="scan-results-hint">Выберите поисковую систему для просмотра результатов</p>
             <div class="results-grid" id="results-grid"></div>
         </div>
     </section>
@@ -2930,23 +2930,29 @@
 
                 let stepIndex = 0;
                 let currentPct = 0;
-                let uploadedUrl = null;
+                let hostedUrl = null;
 
                 const base64Data = currentImageUrl.split(',')[1];
+                const mimeType = currentFile ? currentFile.type : 'image/jpeg';
+                const ext = mimeType.split('/')[1] || 'jpg';
 
-                fetch('https://api.imgbb.com/1/upload?key=2417e8f715543985980548b1d5e0a8d3&image=' + encodeURIComponent(base64Data))
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.data && data.data.url) uploadedUrl = data.data.url;
-                    })
-                    .catch(() => {});
+                fetch('https://freeimage.host/api/1/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'key=6d207e02198a847aa98d0a2a901485a5&source=' + encodeURIComponent(base64Data) + '&format=' + ext
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.image && data.image.url) hostedUrl = data.image.url;
+                })
+                .catch(() => {});
 
                 const interval = setInterval(() => {
                     if (stepIndex >= scanSteps.length) {
                         clearInterval(interval);
                         setTimeout(() => {
                             scanOverlay.classList.remove('active');
-                            showResults(uploadedUrl);
+                            showResults(hostedUrl);
                         }, 600);
                         return;
                     }
@@ -2968,33 +2974,45 @@
 
             function showResults(hostedUrl) {
                 scanResults.classList.add('active');
+                const hintEl = document.getElementById('scan-results-hint');
 
-                const imgForSearch = hostedUrl || currentImageUrl;
-                const encodedUrl = encodeURIComponent(imgForSearch);
+                const engines = [];
 
-                const engines = [
-                    { icon: '🔵', name: 'Google Lens', desc: 'Поиск по изображению', url: 'https://lens.google.com/uploadbyurl?url=' + encodedUrl },
-                    { icon: '🟡', name: 'Yandex Картинки', desc: 'Яндекс поиск', url: 'https://yandex.com/images/search?rpt=imageview&url=' + encodedUrl },
-                    { icon: '🟢', name: 'TinEye', desc: 'Reverse image search', url: 'https://tineye.com/search?url=' + encodedUrl },
-                    { icon: '🔷', name: 'Bing Visual', desc: 'Microsoft search', url: 'https://www.bing.com/images/search?view=detailv2&iss=sbi&form=SBIVSP&q=imgurl:' + encodedUrl },
-                    { icon: '🟠', name: 'Baidu 识图', desc: '百度图片搜索', url: 'https://graph.baidu.com/details?isfromtus498=1&tn=pc&carousel=0&image=' + encodedUrl },
-                    { icon: '🟣', name: 'SauceNAO', desc: 'Anime & Manga', url: 'https://saucenao.com/search.php?db=999&url=' + encodedUrl },
-                    { icon: '⚪', name: 'ImgOps', desc: 'Все движки сразу', url: 'https://imgops.com/' + imgForSearch },
-                    { icon: '🔴', name: 'KarmaDecay', desc: 'Reddit search', url: 'https://karmadecay.com/search?q=' + encodedUrl }
-                ];
+                if (hostedUrl) {
+                    hintEl.textContent = 'Изображение загружено! Кликните для поиска:';
+                    const eu = encodeURIComponent(hostedUrl);
+                    engines.push(
+                        { icon: '🔵', name: 'Google Lens', desc: 'Поиск по изображению', url: 'https://lens.google.com/uploadbyurl?url=' + eu },
+                        { icon: '🟡', name: 'Yandex Картинки', desc: 'Яндекс поиск', url: 'https://yandex.com/images/search?rpt=imageview&url=' + eu },
+                        { icon: '🟢', name: 'TinEye', desc: 'Reverse image search', url: 'https://tineye.com/search?url=' + eu },
+                        { icon: '🔷', name: 'Bing Visual', desc: 'Microsoft search', url: 'https://www.bing.com/images/search?view=detailv2&iss=sbi&form=SBIVSP&q=imgurl:' + eu },
+                        { icon: '🟠', name: 'Baidu 识图', desc: '百度图片搜索', url: 'https://graph.baidu.com/details?isfromtus498=1&tn=pc&carousel=0&image=' + eu },
+                        { icon: '🟣', name: 'SauceNAO', desc: 'Anime & Manga', url: 'https://saucenao.com/search.php?db=999&url=' + eu }
+                    );
+                } else {
+                    hintEl.textContent = 'Хостинг недоступен. Откройте поиск и загрузите фото вручную:';
+                    engines.push(
+                        { icon: '🔵', name: 'Google Lens', desc: 'Загрузите фото вручную', url: 'https://lens.google.com/' },
+                        { icon: '🟡', name: 'Yandex Картинки', desc: 'Загрузите фото вручную', url: 'https://yandex.com/images/' },
+                        { icon: '🟢', name: 'TinEye', desc: 'Загрузите фото вручную', url: 'https://tineye.com/' },
+                        { icon: '🔷', name: 'Bing Visual', desc: 'Загрузите фото вручную', url: 'https://www.bing.com/images' },
+                        { icon: '🟠', name: 'Baidu 识图', desc: 'Загрузите фото вручную', url: 'https://graph.baidu.com/pcpage/index?tpl_from=pc' },
+                        { icon: '🟣', name: 'SauceNAO', desc: 'Загрузите фото вручную', url: 'https://saucenao.com/' }
+                    );
+                }
 
                 resultsGrid.innerHTML = '';
                 engines.forEach(engine => {
-                    const a = document.createElement('a');
-                    a.className = 'result-card';
-                    a.href = engine.url;
-                    a.target = '_blank';
-                    a.rel = 'noopener noreferrer';
-                    a.innerHTML =
+                    const div = document.createElement('div');
+                    div.className = 'result-card';
+                    div.innerHTML =
                         '<span class="result-icon">' + engine.icon + '</span>' +
                         '<span class="result-name">' + engine.name + '</span>' +
                         '<span class="result-desc">' + engine.desc + '</span>';
-                    resultsGrid.appendChild(a);
+                    div.addEventListener('click', function() {
+                        window.open(engine.url, '_blank');
+                    });
+                    resultsGrid.appendChild(div);
                 });
             }
         })();
