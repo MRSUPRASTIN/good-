@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добрый Хакер — Этичный Хакинг и Кибербезопасность</title>
-    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js" defer></script>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2365,6 +2365,7 @@
         <button id="spin-btn" onclick="spinRoulette()">КРУТИТЬ</button>
         <div class="roulette-result" id="roulette-result"></div>
         <div class="roulette-balance">Баланс: <span id="ac-balance">0</span> ArrivalCoin</div>
+        <div class="roulette-balance" style="margin-top:0.5rem;">👁️ Онлайн: <span id="roulette-visitors">0</span></div>
     </section>
 
     <section id="contact" class="contact" style="text-align:center;">
@@ -2973,8 +2974,9 @@
             }
         });
 
-        (function() {
-            const SUPABASE_URL = 'https://bfblxtdnbaykxgvzlevx.supabase.co';
+        window.addEventListener('load', function() {
+            (function() {
+                if (!window.supabase) return;
             const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmYmx4dGRuYmF5a3hndnpsZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNjY4MjAsImV4cCI6MjA5NzY0MjgyMH0.WewOgN8mWtTJ-oFr2C-8qirAKX707dU4TkjkZrd0JUs';
             const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -3088,6 +3090,8 @@
                     vpList.appendChild(renderVisitor(item, false));
                 });
                 vpCount.textContent = data.length;
+                const rvEl = document.getElementById('roulette-visitors');
+                if (rvEl) rvEl.textContent = data.length;
             }
 
             loadVisitors();
@@ -3106,6 +3110,7 @@
                 }
             };
         })();
+        });
     </script>
 
     <script>
@@ -3470,9 +3475,9 @@
             result.textContent = '';
 
             const sliceAngle = 360 / segments.length;
-            const winIndex = 0;
+            const winIndex = Math.floor(Math.random() * segments.length);
             const winAngle = 360 - (winIndex * sliceAngle + sliceAngle / 2) + 90;
-            const extraSpins = 5 * 360;
+            const extraSpins = (5 + Math.floor(Math.random() * 3)) * 360;
             const totalRotation = extraSpins + winAngle;
 
             const currentRotation = parseFloat(wheel.dataset.rotation || 0);
