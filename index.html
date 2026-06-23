@@ -1982,6 +1982,7 @@
             <li><a href="#faq" onclick="playClick()">FAQ</a></li>
             <li><a href="#photo-search" onclick="playClick()">🔍 Поиск фото</a></li>
             <li><a href="#contact" onclick="playClick()">Контакты</a></li>
+            <li><button onclick="openInvestModal(); playClick()" style="background:var(--green);color:var(--bg-dark);border:none;padding:0.4rem 1rem;border-radius:6px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.3s;text-transform:uppercase;letter-spacing:1px;" onmouseover="this.style.boxShadow='0 5px 20px rgba(0,255,65,0.4)'" onmouseout="this.style.boxShadow='none'">Инвестирую</button></li>
             <li><a href="admin.html" style="color:var(--green);border:1px solid rgba(0,255,65,0.3);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;" onclick="playClick()">Админ</a></li>
         </ul>
     </nav>
@@ -2296,6 +2297,20 @@
         </div>
     </div>
     <div class="copy-toast" id="copy-toast">Адрес скопирован!</div>
+
+    <div class="payment-modal-overlay" id="invest-modal-overlay" onclick="if(event.target===this)closeInvestModal()">
+        <div class="payment-modal">
+            <button class="btn-close" onclick="closeInvestModal()">&times;</button>
+            <h3>Поддержать проект</h3>
+            <div class="network-badge">TON Network</div>
+            <p style="color:var(--text-dim);margin:1rem 0;font-size:0.9rem;">Если вам нравится наш проект, вы можете поддержать нас добровольным донатом.</p>
+            <div class="wallet-label">Адрес TON-кошелька:</div>
+            <div class="wallet-addr" onclick="copyInvestWallet()" id="invest-wallet-addr">UQBAtQa96SBwjfTpuiDAphf065OvEr1W78JUrL1U8X3-J9Mw</div>
+            <div class="copy-hint">Нажмите на адрес чтобы скопировать</div>
+            <a class="btn btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:1rem;" href="https://tonkeeper.com/transfer?address=UQBAtQa96SBwjfTpuiDAphf065OvEr1W78JUrL1U8X3-J9Mw" target="_blank">Открыть в Tonkeeper</a>
+        </div>
+    </div>
+    <div class="copy-toast" id="invest-copy-toast">Адрес скопирован!</div>
 
     <div class="chat-widget">
         <button class="chat-btn" onclick="toggleChat(); playClick()">💬</button>
@@ -3194,28 +3209,21 @@
                         spinner.classList.remove('active');
                         if (images && images.length > 0) {
                             similarTitle.classList.add('active');
-                            var hasThumb = images.some(function(img) { return img.thumb; });
                             images.forEach(function(img) {
                                 var card = document.createElement('div');
                                 card.className = 'similar-card';
-                                if (img.thumb) {
-                                    card.innerHTML =
-                                        '<img src="' + img.thumb + '" alt="similar" onerror="this.parentElement.style.display=\'none\'">' +
-                                        '<div class="sim-source">' + (img.source || 'Источник') + '</div>';
-                                } else {
-                                    card.style.cursor = img.url ? 'pointer' : 'default';
-                                    card.style.padding = '1rem';
-                                    card.style.textAlign = 'left';
-                                    card.innerHTML =
-                                        '<div style="color:var(--text);font-size:0.85rem;line-height:1.5;">' +
-                                        (img.source || 'Нет данных') +
-                                        '</div>';
-                                    if (img.url) {
-                                        var linkHint = document.createElement('div');
-                                        linkHint.style.cssText = 'margin-top:0.5rem;font-size:0.7rem;color:var(--green);';
-                                        linkHint.textContent = '→ Найти в Google Images';
-                                        card.appendChild(linkHint);
-                                    }
+                                card.style.cursor = img.url ? 'pointer' : 'default';
+                                card.style.padding = '1rem';
+                                card.style.textAlign = 'left';
+                                card.innerHTML =
+                                    '<div style="color:var(--text);font-size:0.85rem;line-height:1.5;">' +
+                                    (img.source || 'Нет данных') +
+                                    '</div>';
+                                if (img.url) {
+                                    var linkHint = document.createElement('div');
+                                    linkHint.style.cssText = 'margin-top:0.5rem;font-size:0.7rem;color:var(--green);';
+                                    linkHint.textContent = '\u2192 \u041d\u0430\u0439\u0442\u0438 \u0432 Google Images';
+                                    card.appendChild(linkHint);
                                 }
                                 if (img.url) {
                                     card.addEventListener('click', function() { window.open(img.url, '_blank'); });
@@ -3249,67 +3257,35 @@
             }
 
             function fetchSimilarImages(url, callback) {
-                var apiKey = 'om-27K9UiCivGPcGbaqwZ9EcmXvogEbpZSDDLKS7r5nZrq';
-                var apiUrl = 'https://api.openmodel.app/v1/chat/completions';
-
-                var systemPrompt = 'Ты эксперт по визуальному анализу изображений. Проанализируй загруженное изображение и верни JSON с полями: description (описание на русском, 2-3 предложения), keywords (массив из 5-8 ключевых слов/фраз для поиска похожих изображений на английском языке), category (категория изображения). Отвечай ТОЛЬКО валидным JSON без markdown.';
-
-                fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + apiKey
-                    },
-                    body: JSON.stringify({
-                        model: 'deepseek-v4-flash',
-                        messages: [
-                            { role: 'system', content: systemPrompt },
-                            {
-                                role: 'user',
-                                content: [
-                                    { type: 'text', text: 'Проанализируй это изображение. Опиши его содержимое, определи категорию и составь список ключевых слов для поиска похожих изображений в интернете.' },
-                                    { type: 'image_url', image_url: { url: url } }
-                                ]
-                            }
-                        ],
-                        temperature: 0.3,
-                        max_tokens: 800
-                    })
-                })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    var results = [];
-                    var text = '';
-                    try {
-                        text = data.choices[0].message.content;
-                        var cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-                        var parsed = JSON.parse(cleaned);
-                        if (parsed.keywords && parsed.keywords.length > 0) {
-                            parsed.keywords.forEach(function(kw) {
-                                results.push({
-                                    thumb: '',
-                                    url: 'https://www.google.com/search?q=' + encodeURIComponent(kw) + '&tbm=isch',
-                                    source: kw
-                                });
-                            });
-                        }
-                        if (parsed.description) {
-                            results.unshift({
-                                thumb: '',
-                                url: '',
-                                source: '📝 ' + parsed.description
-                            });
-                        }
-                    } catch(e) {
-                        results.push({ thumb: '', url: '', source: text || 'Анализ недоступен' });
-                    }
-                    callback(results);
-                })
-                .catch(function() {
-                    callback([]);
-                });
+                var results = [
+                    { thumb: '', url: 'https://lens.google.com/uploadbyurl?url=' + encodeURIComponent(url), source: '🔍 Google Lens — визуальный поиск' },
+                    { thumb: '', url: 'https://yandex.com/images/search?rpt=imageview&url=' + encodeURIComponent(url), source: '🟡 Yandex — обратный поиск изображений' },
+                    { thumb: '', url: 'https://tineye.com/search?url=' + encodeURIComponent(url), source: '🟢 TinEye — поиск оригинала' },
+                    { thumb: '', url: 'https://www.bing.com/images/search?view=detailv2&iss=sbi&form=SBIVSP&q=imgurl:' + encodeURIComponent(url), source: '🔷 Bing Visual Search' },
+                    { thumb: '', url: 'https://graph.baidu.com/details?isfromtus498=1&tn=pc&carousel=0&image=' + encodeURIComponent(url), source: '🟠 Baidu — поиск по изображению' }
+                ];
+                callback(results);
             }
         })();
+    </script>
+    <script>
+        const INVEST_WALLET = 'UQBAtQa96SBwjfTpuiDAphf065OvEr1W78JUrL1U8X3-J9Mw';
+
+        function openInvestModal() {
+            document.getElementById('invest-modal-overlay').classList.add('active');
+        }
+
+        function closeInvestModal() {
+            document.getElementById('invest-modal-overlay').classList.remove('active');
+        }
+
+        function copyInvestWallet() {
+            navigator.clipboard.writeText(INVEST_WALLET).then(() => {
+                const toast = document.getElementById('invest-copy-toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            });
+        }
     </script>
 </body>
 </html>
