@@ -1924,6 +1924,105 @@
             body { cursor: auto; }
             .custom-cursor, .custom-cursor-dot { display: none; }
         }
+
+        .roulette-section {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        .roulette-wrapper {
+            position: relative;
+            width: 340px;
+            height: 340px;
+            margin: 2rem auto;
+        }
+        .roulette-wheel {
+            width: 340px;
+            height: 340px;
+            border-radius: 50%;
+            border: 6px solid var(--green);
+            box-shadow: 0 0 40px rgba(0,255,65,0.3), inset 0 0 40px rgba(0,255,65,0.1);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            position: relative;
+            overflow: hidden;
+        }
+        .roulette-wheel canvas {
+            width: 100%;
+            height: 100%;
+        }
+        .roulette-pointer {
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 16px solid transparent;
+            border-right: 16px solid transparent;
+            border-top: 30px solid var(--green);
+            filter: drop-shadow(0 0 8px rgba(0,255,65,0.6));
+            z-index: 10;
+        }
+        .roulette-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            background: var(--bg-dark);
+            border: 4px solid var(--green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            box-shadow: 0 0 20px rgba(0,255,65,0.4);
+        }
+        #spin-btn {
+            padding: 1rem 3rem;
+            background: var(--green);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+        #spin-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,255,65,0.5);
+        }
+        #spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .roulette-result {
+            margin-top: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--green);
+            text-shadow: 0 0 20px rgba(0,255,65,0.5);
+            min-height: 2em;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .roulette-result.show { opacity: 1; }
+        .roulette-balance {
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: var(--text-dim);
+        }
+        .roulette-balance span {
+            color: var(--green);
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(0,255,65,0.3);
+        }
     </style>
 </head>
 <body>
@@ -1982,6 +2081,7 @@
             <li><a href="#faq" onclick="playClick()">FAQ</a></li>
             <li><a href="#photo-search" onclick="playClick()">🔍 Поиск фото</a></li>
             <li><a href="#contact" onclick="playClick()">Контакты</a></li>
+            <li><a href="#roulette" onclick="playClick()">🎰 Рулетка</a></li>
             <li><button onclick="openInvestModal(); playClick()" style="background:var(--green);color:var(--bg-dark);border:none;padding:0.4rem 1rem;border-radius:6px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.3s;text-transform:uppercase;letter-spacing:1px;" onmouseover="this.style.boxShadow='0 5px 20px rgba(0,255,65,0.4)'" onmouseout="this.style.boxShadow='none'">Инвестирую</button></li>
             <li><a href="admin.html" style="color:var(--green);border:1px solid rgba(0,255,65,0.3);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;" onclick="playClick()">Админ</a></li>
         </ul>
@@ -2251,6 +2351,21 @@
             <div class="scan-status" id="scan-status">Инициализация...</div>
         </div>
     </div>
+
+    <section id="roulette" class="roulette-section">
+        <h2 class="section-title fade-in">🎰 <span>ArrivalCoin</span> Рулетка</h2>
+        <p class="section-subtitle fade-in">Крутите колесо и выигрывайте внутренние монеты ArrivalCoin!</p>
+        <div class="roulette-wrapper">
+            <div class="roulette-pointer"></div>
+            <div class="roulette-wheel" id="roulette-wheel">
+                <canvas id="roulette-canvas" width="340" height="340"></canvas>
+            </div>
+            <div class="roulette-center">🎰</div>
+        </div>
+        <button id="spin-btn" onclick="spinRoulette()">КРУТИТЬ</button>
+        <div class="roulette-result" id="roulette-result"></div>
+        <div class="roulette-balance">Баланс: <span id="ac-balance">0</span> ArrivalCoin</div>
+    </section>
 
     <section id="contact" class="contact" style="text-align:center;">
         <h2 class="section-title fade-in">Свяжитесь с <span>нами</span></h2>
@@ -3285,6 +3400,98 @@
                 setTimeout(() => toast.classList.remove('show'), 2000);
             });
         }
+
+        let acBalance = 0;
+        let isSpinning = false;
+
+        const segments = [
+            { text: '1000 AC', color: '#00ff41', prize: 1000 },
+            { text: '50 AC', color: '#004d1a', prize: 50 },
+            { text: '25 AC', color: '#00cc33', prize: 25 },
+            { text: '100 AC', color: '#001a0d', prize: 100 },
+            { text: '10 AC', color: '#003322', prize: 10 },
+            { text: '200 AC', color: '#006633', prize: 200 },
+            { text: '5 AC', color: '#002211', prize: 5 },
+            { text: '500 AC', color: '#009944', prize: 500 }
+        ];
+
+        function drawWheel() {
+            const canvas = document.getElementById('roulette-canvas');
+            const ctx = canvas.getContext('2d');
+            const cx = 170, cy = 170, r = 165;
+            const sliceAngle = (2 * Math.PI) / segments.length;
+
+            ctx.clearRect(0, 0, 340, 340);
+
+            segments.forEach((seg, i) => {
+                const startAngle = i * sliceAngle - Math.PI / 2;
+                const endAngle = startAngle + sliceAngle;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, r, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = seg.color;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0,255,65,0.3)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(startAngle + sliceAngle / 2);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 13px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(seg.text, r * 0.62, 5);
+                ctx.restore();
+            });
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 34, 0, Math.PI * 2);
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fill();
+            ctx.strokeStyle = '#00ff41';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function spinRoulette() {
+            if (isSpinning) return;
+            isSpinning = true;
+
+            const btn = document.getElementById('spin-btn');
+            const wheel = document.getElementById('roulette-wheel');
+            const result = document.getElementById('roulette-result');
+            const balanceEl = document.getElementById('ac-balance');
+
+            btn.disabled = true;
+            result.classList.remove('show');
+            result.textContent = '';
+
+            const sliceAngle = 360 / segments.length;
+            const winIndex = 0;
+            const winAngle = 360 - (winIndex * sliceAngle + sliceAngle / 2) + 90;
+            const extraSpins = 5 * 360;
+            const totalRotation = extraSpins + winAngle;
+
+            const currentRotation = parseFloat(wheel.dataset.rotation || 0);
+            wheel.style.transform = 'rotate(' + (currentRotation + totalRotation) + 'deg)';
+            wheel.dataset.rotation = currentRotation + totalRotation;
+
+            setTimeout(() => {
+                const prize = segments[winIndex];
+                acBalance += prize.prize;
+                balanceEl.textContent = acBalance;
+                result.textContent = '🎉 Вы выиграли ' + prize.text + '!';
+                result.classList.add('show');
+                btn.disabled = false;
+                isSpinning = false;
+                playClick();
+            }, 4200);
+        }
+
+        drawWheel();
     </script>
 </body>
 </html>
